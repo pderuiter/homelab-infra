@@ -1,0 +1,255 @@
+---
+# Deployment 1: Tokens 1 & 2 (originally on docker01)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vault-unseal-1
+  namespace: vault-unseal
+  labels:
+    app.kubernetes.io/name: vault-unseal
+    app.kubernetes.io/instance: vault-unseal-1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vault-unseal
+      app.kubernetes.io/instance: vault-unseal-1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: vault-unseal
+        app.kubernetes.io/instance: vault-unseal-1
+    spec:
+      securityContext:
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+      containers:
+        - name: vault-unseal
+          image: ghcr.io/lrstanley/vault-unseal:latest
+          imagePullPolicy: Always
+          env:
+            - name: LOG_LEVEL
+              value: "info"
+            - name: ENVIRONMENT
+              value: "prd"
+            - name: CHECK_INTERVAL
+              value: "15s"
+            - name: MAX_CHECK_INTERVAL
+              value: "30m"
+            - name: TLS_SKIP_VERIFY
+              value: "true"
+            - name: NOTIFY_MAX_ELAPSED
+              value: "1h"
+            - name: NOTIFY_QUEUE_DELAY
+              value: "30s"
+            - name: EMAIL_ENABLED
+              value: "false"
+            - name: NODES
+              value: "https://wbyc-srv-docker01.bsdserver.lan:8200,https://wbyc-srv-docker02.bsdserver.lan:8200,https://wbyc-srv-docker03.bsdserver.lan:8200"
+            - name: TOKENS
+              valueFrom:
+                secretKeyRef:
+                  name: vault-unseal-tokens-1
+                  key: tokens
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 50m
+              memory: 32Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: DoesNotExist
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app.kubernetes.io/name
+                      operator: In
+                      values:
+                        - vault-unseal
+                topologyKey: kubernetes.io/hostname
+---
+# Deployment 2: Tokens 2 & 3 (originally on docker02)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vault-unseal-2
+  namespace: vault-unseal
+  labels:
+    app.kubernetes.io/name: vault-unseal
+    app.kubernetes.io/instance: vault-unseal-2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vault-unseal
+      app.kubernetes.io/instance: vault-unseal-2
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: vault-unseal
+        app.kubernetes.io/instance: vault-unseal-2
+    spec:
+      securityContext:
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+      containers:
+        - name: vault-unseal
+          image: ghcr.io/lrstanley/vault-unseal:latest
+          imagePullPolicy: Always
+          env:
+            - name: LOG_LEVEL
+              value: "info"
+            - name: ENVIRONMENT
+              value: "prd"
+            - name: CHECK_INTERVAL
+              value: "15s"
+            - name: MAX_CHECK_INTERVAL
+              value: "30m"
+            - name: TLS_SKIP_VERIFY
+              value: "true"
+            - name: NOTIFY_MAX_ELAPSED
+              value: "1h"
+            - name: NOTIFY_QUEUE_DELAY
+              value: "30s"
+            - name: EMAIL_ENABLED
+              value: "false"
+            - name: NODES
+              value: "https://wbyc-srv-docker01.bsdserver.lan:8200,https://wbyc-srv-docker02.bsdserver.lan:8200,https://wbyc-srv-docker03.bsdserver.lan:8200"
+            - name: TOKENS
+              valueFrom:
+                secretKeyRef:
+                  name: vault-unseal-tokens-2
+                  key: tokens
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 50m
+              memory: 32Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: DoesNotExist
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app.kubernetes.io/name
+                      operator: In
+                      values:
+                        - vault-unseal
+                topologyKey: kubernetes.io/hostname
+---
+# Deployment 3: Tokens 1 & 3 (originally on docker03)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vault-unseal-3
+  namespace: vault-unseal
+  labels:
+    app.kubernetes.io/name: vault-unseal
+    app.kubernetes.io/instance: vault-unseal-3
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vault-unseal
+      app.kubernetes.io/instance: vault-unseal-3
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: vault-unseal
+        app.kubernetes.io/instance: vault-unseal-3
+    spec:
+      securityContext:
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+      containers:
+        - name: vault-unseal
+          image: ghcr.io/lrstanley/vault-unseal:latest
+          imagePullPolicy: Always
+          env:
+            - name: LOG_LEVEL
+              value: "info"
+            - name: ENVIRONMENT
+              value: "prd"
+            - name: CHECK_INTERVAL
+              value: "15s"
+            - name: MAX_CHECK_INTERVAL
+              value: "30m"
+            - name: TLS_SKIP_VERIFY
+              value: "true"
+            - name: NOTIFY_MAX_ELAPSED
+              value: "1h"
+            - name: NOTIFY_QUEUE_DELAY
+              value: "30s"
+            - name: EMAIL_ENABLED
+              value: "false"
+            - name: NODES
+              value: "https://wbyc-srv-docker01.bsdserver.lan:8200,https://wbyc-srv-docker02.bsdserver.lan:8200,https://wbyc-srv-docker03.bsdserver.lan:8200"
+            - name: TOKENS
+              valueFrom:
+                secretKeyRef:
+                  name: vault-unseal-tokens-3
+                  key: tokens
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 50m
+              memory: 32Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: DoesNotExist
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app.kubernetes.io/name
+                      operator: In
+                      values:
+                        - vault-unseal
+                topologyKey: kubernetes.io/hostname

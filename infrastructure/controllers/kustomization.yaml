@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - node-tuning
   - sealed-secrets
+  - vault-unseal
   - external-secrets
   - metallb
   - traefik
