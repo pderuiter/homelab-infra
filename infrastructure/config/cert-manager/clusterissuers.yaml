@@ -16,7 +16,9 @@ spec:
             config:
               accountName: pderuiter
               ttl: 300
-              secretName: transip-credentials
+              privateKeySecretRef:
+                name: transip-credentials
+                key: private.key
 ---
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
@@ -36,4 +38,6 @@ spec:
             config:
               accountName: pderuiter
               ttl: 300
-              secretName: transip-credentials
+              privateKeySecretRef:
+                name: transip-credentials
+                key: private.key
