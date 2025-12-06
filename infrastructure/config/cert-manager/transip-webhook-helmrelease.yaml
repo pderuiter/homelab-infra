@@ -1,0 +1,51 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: cert-manager-webhook-transip
+  namespace: cert-manager
+spec:
+  interval: 24h
+  url: https://robinknaapen.github.io/cert-manager-webhook-transip
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cert-manager-webhook-transip
+  namespace: cert-manager
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: cert-manager-webhook-transip
+      version: "1.3.x"
+      sourceRef:
+        kind: HelmRepository
+        name: cert-manager-webhook-transip
+        namespace: cert-manager
+      interval: 12h
+  dependsOn:
+    - name: cert-manager
+      namespace: cert-manager
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    groupName: acme.bsdserver.nl
+
+    # Resource limits
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        cpu: 100m
+        memory: 64Mi
+
+    # Tolerations
+    tolerations:
+      - key: "node-role.kubernetes.io/control-plane"
+        operator: "Exists"
+        effect: "NoSchedule"
