@@ -111,4 +111,3 @@ spec:
     # Environment variables
     environment:
       MINIO_BROWSER_REDIRECT_URL: "https://minio-console.bsdserver.nl"
-      MINIO_SERVER_URL: "https://minio-k8s.bsdserver.nl"
