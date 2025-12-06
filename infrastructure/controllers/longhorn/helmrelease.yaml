@@ -61,6 +61,10 @@ spec:
                   - key: node-role.kubernetes.io/control-plane
                     operator: DoesNotExist
 
+    # CSI driver settings
+    csi:
+      kubeletRootDir: /var/lib/kubelet
+
     # Longhorn driver - exclude control-plane nodes
     longhornDriver:
       nodeSelector:
