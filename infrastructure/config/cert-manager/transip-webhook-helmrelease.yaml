@@ -5,7 +5,7 @@ metadata:
   namespace: cert-manager
 spec:
   interval: 24h
-  url: https://robinknaapen.github.io/cert-manager-webhook-transip
+  url: https://assi010.github.io/cert-manager-webhook-transip
 ---
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
@@ -16,8 +16,8 @@ spec:
   interval: 30m
   chart:
     spec:
-      chart: cert-manager-webhook-transip
-      version: "1.3.x"
+      chart: transip-webhook
+      version: "0.1.x"
       sourceRef:
         kind: HelmRepository
         name: cert-manager-webhook-transip
@@ -34,6 +34,12 @@ spec:
       retries: 3
   values:
     groupName: acme.bsdserver.nl
+
+    # TransIP credentials secret
+    transip:
+      accountName: pderuiter
+      existingSecretName: transip-credentials
+      existingSecretKey: privateKey
 
     # Resource limits
     resources:
