@@ -23,4 +23,4 @@ metadata:
   namespace: observability
 spec:
   interval: 24h
-  url: https://binwiederhier.github.io/ntfy
+  url: https://charts.sarabsingh.com

@@ -8,7 +8,7 @@ spec:
   chart:
     spec:
       chart: ntfy
-      version: "0.x"
+      version: "0.1.x"
       sourceRef:
         kind: HelmRepository
         name: ntfy
@@ -22,6 +22,11 @@ spec:
       retries: 3
   values:
     replicaCount: 1
+
+    image:
+      repository: binwiederhier/ntfy
+      tag: v2.11.0
+      pullPolicy: IfNotPresent
 
     # Resources
     resources:
@@ -37,6 +42,11 @@ spec:
       enabled: true
       storageClass: longhorn
       size: 5Gi
+
+    # Service
+    service:
+      type: ClusterIP
+      port: 80
 
     # Ingress
     ingress:
@@ -55,12 +65,11 @@ spec:
             - ntfy.bsdserver.nl
 
     # ntfy configuration
-    config:
-      base-url: https://ntfy.bsdserver.nl
-      cache-file: /var/cache/ntfy/cache.db
-      cache-duration: 24h
-      behind-proxy: true
-      keepalive-interval: 45s
+    ntfy:
+      baseUrl: https://ntfy.bsdserver.nl
+      behindProxy: true
+      cacheDuration: 24h
+      keepaliveInterval: 45s
 
     # Affinity
     affinity:
