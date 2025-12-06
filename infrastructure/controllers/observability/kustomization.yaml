@@ -9,4 +9,3 @@ resources:
   - alloy-helmrelease.yaml
   - grafana-helmrelease.yaml
   - ntfy-helmrelease.yaml
-  - vmware-exporter.yaml

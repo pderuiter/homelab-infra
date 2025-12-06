@@ -77,16 +77,6 @@ spec:
             }
           }
 
-          // vSphere Exporter scrape
-          prometheus.scrape "vsphere" {
-            targets = [
-              {"__address__" = "vmware-exporter.observability.svc:9272"},
-            ]
-            forward_to = [prometheus.remote_write.default.receiver]
-            scrape_interval = "60s"
-            scrape_timeout  = "30s"
-          }
-
           // Remote write to Prometheus
           prometheus.remote_write "default" {
             endpoint {
@@ -125,4 +115,97 @@ spec:
 
     # RBAC for Kubernetes discovery
     rbac:
+      create: true
+---
+# Separate Alloy deployment for vSphere metrics (singleton, not daemonset)
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: alloy-vsphere
+  namespace: observability
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: alloy
+      version: "0.x"
+      sourceRef:
+        kind: HelmRepository
+        name: grafana
+        namespace: observability
+      interval: 12h
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    fullnameOverride: alloy-vsphere
+
+    alloy:
+      configMap:
+        content: |
+          // vSphere exporter - native Alloy component
+          prometheus.exporter.vsphere "vcenter" {
+            vsphere_url      = "https://" + env("VSPHERE_HOST") + "/sdk"
+            vsphere_user     = env("VSPHERE_USER")
+            vsphere_password = env("VSPHERE_PASSWORD")
+
+            // Collection settings
+            enable_exporter_metrics = true
+
+            // Collect VMs, hosts, and datastores
+            vm_metric_include       = ["*"]
+            host_metric_include     = ["*"]
+            datastore_metric_include = ["*"]
+
+            // Discovery interval
+            discovery_interval = "5m"
+          }
+
+          // Scrape the vSphere exporter
+          prometheus.scrape "vsphere" {
+            targets    = prometheus.exporter.vsphere.vcenter.targets
+            forward_to = [prometheus.remote_write.default.receiver]
+
+            scrape_interval = "60s"
+            scrape_timeout  = "55s"
+          }
+
+          // Remote write to Prometheus
+          prometheus.remote_write "default" {
+            endpoint {
+              url = "http://kube-prometheus-stack-prometheus.observability.svc:9090/api/v1/write"
+            }
+          }
+
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+
+      # vSphere credentials from secret
+      extraEnvFrom:
+        - secretRef:
+            name: vsphere-credentials
+
+    # Single replica deployment (not daemonset)
+    controller:
+      type: deployment
+      replicas: 1
+
+    # Schedule on worker nodes
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: node-role.kubernetes.io/control-plane
+                  operator: DoesNotExist
+
+    serviceAccount:
       create: true
