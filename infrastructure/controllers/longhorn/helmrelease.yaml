@@ -48,6 +48,7 @@ spec:
       tlsSecret: longhorn-tls
       annotations:
         cert-manager.io/cluster-issuer: letsencrypt-production
+        traefik.ingress.kubernetes.io/router.middlewares: longhorn-system-longhorn-basic-auth@kubernetescrd
 
     # Longhorn manager - exclude control-plane nodes using affinity
     longhornManager:
