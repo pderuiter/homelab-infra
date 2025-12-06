@@ -29,6 +29,11 @@ spec:
     # Replicas
     replicaCount: 1
 
+    # Use public DNS servers for DNS-01 challenge verification
+    extraArgs:
+      - --dns01-recursive-nameservers-only
+      - --dns01-recursive-nameservers=8.8.8.8:53,1.1.1.1:53
+
     # Resource limits
     resources:
       requests:

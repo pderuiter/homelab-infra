@@ -10,6 +10,8 @@ spec:
       name: letsencrypt-staging-account-key
     solvers:
       - dns01:
+          # Use public DNS servers for challenge verification
+          cnameStrategy: Follow
           webhook:
             groupName: acme.bsdserver.nl
             solverName: transip
@@ -32,6 +34,8 @@ spec:
       name: letsencrypt-production-account-key
     solvers:
       - dns01:
+          # Use public DNS servers for challenge verification
+          cnameStrategy: Follow
           webhook:
             groupName: acme.bsdserver.nl
             solverName: transip
