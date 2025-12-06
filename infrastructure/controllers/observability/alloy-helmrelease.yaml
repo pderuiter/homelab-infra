@@ -144,33 +144,42 @@ spec:
     fullnameOverride: alloy-vsphere
 
     alloy:
+      # Enable experimental components (required for otelcol.receiver.vcenter)
+      extraArgs:
+        - --stability.level=experimental
+
       configMap:
         content: |
-          // vSphere exporter - native Alloy component
-          prometheus.exporter.vsphere "vcenter" {
-            vsphere_url      = "https://" + env("VSPHERE_HOST") + "/sdk"
-            vsphere_user     = env("VSPHERE_USER")
-            vsphere_password = env("VSPHERE_PASSWORD")
+          // vSphere metrics collection using OpenTelemetry vCenter receiver
+          // This is an experimental component that replaces prometheus.exporter.vsphere
+          otelcol.receiver.vcenter "vcenter" {
+            endpoint = "https://" + env("VSPHERE_HOST")
+            username = env("VSPHERE_USER")
+            password = env("VSPHERE_PASSWORD")
 
-            // Collection settings
-            enable_exporter_metrics = true
+            // Skip TLS verification for self-signed certs
+            tls {
+              insecure_skip_verify = true
+            }
 
-            // Collect VMs, hosts, and datastores
-            vm_metric_include       = ["*"]
-            host_metric_include     = ["*"]
-            datastore_metric_include = ["*"]
+            // Collection interval
+            collection_interval = "60s"
 
-            // Discovery interval
-            discovery_interval = "5m"
+            output {
+              metrics = [otelcol.processor.batch.default.input]
+            }
           }
 
-          // Scrape the vSphere exporter
-          prometheus.scrape "vsphere" {
-            targets    = prometheus.exporter.vsphere.vcenter.targets
-            forward_to = [prometheus.remote_write.default.receiver]
+          // Batch processor for efficiency
+          otelcol.processor.batch "default" {
+            output {
+              metrics = [otelcol.exporter.prometheus.default.input]
+            }
+          }
 
-            scrape_interval = "60s"
-            scrape_timeout  = "55s"
+          // Export metrics in Prometheus format for scraping
+          otelcol.exporter.prometheus "default" {
+            forward_to = [prometheus.remote_write.default.receiver]
           }
 
           // Remote write to Prometheus
