@@ -30,8 +30,8 @@ spec:
     # Prometheus configuration
     prometheus:
       prometheusSpec:
-        retention: 30d
-        retentionSize: 45GB
+        retention: 15d
+        retentionSize: 18GB
         replicas: 1
 
         # Storage
