@@ -23,44 +23,25 @@ spec:
   values:
     # Default settings
     defaultSettings:
-      # Default replica count for volumes
       defaultReplicaCount: 2
-      # Storage path on nodes
       defaultDataPath: /var/lib/longhorn
-      # Guaranteed engine manager CPU
       guaranteedEngineManagerCPU: 12
-      # Guaranteed replica manager CPU
       guaranteedReplicaManagerCPU: 12
-      # Storage over-provisioning percentage
       storageOverProvisioningPercentage: 100
-      # Storage minimal available percentage
       storageMinimalAvailablePercentage: 15
-      # Node down pod deletion policy
       nodeDownPodDeletionPolicy: delete-both-statefulset-and-deployment-pod
+      # Only schedule on nodes without control-plane role
+      systemManagedComponentsNodeSelector: "node-role.kubernetes.io/control-plane:false"
       # Backup target (can be configured later for NFS)
       # backupTarget: nfs://192.168.2.x:/backup/longhorn
-      # Disable scheduling on control-plane nodes
-      taintToleration: "node-role.kubernetes.io/control-plane:NoSchedule"
-      systemManagedComponentsNodeSelector: "node-role.kubernetes.io/control-plane:false"
-
-    # Exclude master nodes from storage scheduling
-    longhornNodes:
-      - name: wbyc-k8s-master01
-        allowScheduling: false
-      - name: wbyc-k8s-master02
-        allowScheduling: false
-      - name: wbyc-k8s-master03
-        allowScheduling: false
 
     persistence:
-      # Default StorageClass
       defaultClass: true
       defaultClassReplicaCount: 2
-      # RWX support via NFS
       defaultFsType: ext4
       reclaimPolicy: Delete
 
-    # Ingress for UI (optional, uses Traefik)
+    # Ingress for UI
     ingress:
       enabled: true
       ingressClassName: traefik
@@ -70,21 +51,38 @@ spec:
       annotations:
         cert-manager.io/cluster-issuer: letsencrypt-production
 
-    # Resource limits
+    # Longhorn manager - exclude control-plane nodes using affinity
     longhornManager:
-      tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
+      nodeSelector:
+        kubernetes.io/os: linux
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: DoesNotExist
 
+    # Longhorn driver - exclude control-plane nodes
     longhornDriver:
-      tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
+      nodeSelector:
+        kubernetes.io/os: linux
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: DoesNotExist
 
+    # Longhorn UI - exclude control-plane nodes
     longhornUI:
-      tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
+      nodeSelector:
+        kubernetes.io/os: linux
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: DoesNotExist
