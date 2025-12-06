@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vault-ca-cert
+  namespace: external-secrets
+data:
+  # We Build Your Cloud CA certificate
+  # This is a public CA certificate, not a secret
+  ca.crt: |
+    -----BEGIN CERTIFICATE-----
+    MIIFEjCCAvqgAwIBAgIUKfnElcEMtKLp8BPOElcYXnBTcUcwDQYJKoZIhvcNAQEL
+    BQAwITEfMB0GA1UEAwwWV2UgQnVpbGQgWW91ciBDbG91ZCBDQTAeFw0yMzExMDIx
+    MDQzNDhaFw0zMzEwMzAxMDQzNDhaMCExHzAdBgNVBAMMFldlIEJ1aWxkIFlvdXIg
+    Q2xvdWQgQ0EwggIiMA0GCSqGSIb3DQEBAQUAA4ICDwAwggIKAoICAQDO4HngAr2i
+    7lHw9U6YcFs5y7ypvWY4JYbTOZfO/+ZpokMJlxGfTI5Qd2cqUueCqdhWboY+Lh3t
+    Idu7Eo77nluOKwajtxcvc8qD1Q23nIgGlvMNpGE4CGQa1gE1rwicZ0X8tgGa26uH
+    mt1Pd8szvi8brJAkPiDkn5qFZCbjbSeVCrh2Gg2tLv+24ztREjpUffyy9rJGFdMR
+    Ne21xeApC4h4kz7/azZ/j07s8SmU+aNxnaNSxKPoR+HEl5BRASxKGLpWGlhJ8GQK
+    dszN/bdc/eqt5IJ1QaUgWcHNpIoI55MYUbyCZtcqMbvl3bKYM4aKZGKEWhBrRxjV
+    SwmOGZCfb5U7hlrEU/zJdIQ6W01wmQvQj2ULFwcXuywci8IfdjcIcmNHL9h0i5aI
+    6yxIgYi5n4JsY3iHkfVu3FY/2mmJu/BesORgMvti9Rf+adL9gVNalx/9nLb5w67M
+    5gHl4ZOnFu7MZrrrRt94L2sLw/mV/eF1vTKBUS/hE6q5LS9MBt74OuSbvIxBjTge
+    3J8AoifL0u/T4tpscCILOkhpe25ZYloXLGgfa+wEzmbh6i03MuVI8Cm8PFMlD1kQ
+    7Zf4i4ZQ43KlWvtpb6ptqdbz1mUy1gzsya5wZaDGbFWP9j8dVzSpfr1HF3+EGUqM
+    h/j2ikoakolZU0pLZVKUM8EC2vEiuR4fSwIDAQABo0IwQDAOBgNVHQ8BAf8EBAMC
+    AgQwDwYDVR0TAQH/BAUwAwEB/zAdBgNVHQ4EFgQUc2XSTlmGXFVH+stfuXuzi3i3
+    j1owDQYJKoZIhvcNAQELBQADggIBAEqd2WAfb8mSRHd0l0c5AUe1Ab9FNREjcm1N
+    4l9Y5LNaGoMR/ya1wZA8nDvj2NvYzYZr+EtWvcDsnmCi8FdUYi4aeEtZQSarfy0m
+    YHLTyVFk+SqdypAT7bMa8NbvpCvl6jK1FaPz+fsS3NL7Kz/WSrlDJuym+C4R+d6g
+    aKUjVG55lxWpziPocienyIfP1Ug9CaIcA1o0Hswo8nijJidtD1r1l2mIvhTW/oUM
+    MucUa+hKDLAkTFzYbboCnj/7g9W8rDZ18M8qBxDfy1K4G34WMeKMoKbSWFfmTzXM
+    tyIYdGN9cFxD/r3VUJMNCwOy9y9qYR8NTk6GFkxJhnuC2LARgJYhahnf/2Rl7oLz
+    f/qjqSE9EJMx+S6lm56isaeXOY96qfaKTuIMzbVE6QSGlp80GlAnsCZDUvOOSxhR
+    8IZRU2Y5rAWY2brIqo04VSUSwhDcstBwI1a0nK83s1n8K2da8a/bwKQCyOKZwTHD
+    vWlcKSJ3Y1uiRGXAgMCwXBhtb7Zw8Ea78NJCVXvllfazsd481KO+nRHLmGNvi//p
+    xYvy1xvNxz8uNY4lWqANbhyWA9982xgwe808+LcNhvFFgGsi0kzAJin5TKfuWWvj
+    L89ihu4sPFdIoGYNYS57XnvuwCnm5HBxIpFcbKRf+5RrOxktixAHiwgzfv1OVp25
+    S/mtBwBt
+    -----END CERTIFICATE-----

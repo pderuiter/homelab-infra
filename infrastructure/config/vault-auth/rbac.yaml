@@ -1,0 +1,23 @@
+---
+# ServiceAccount for ESO to authenticate to Vault
+# This SA is used by the ClusterSecretStore to authenticate via Kubernetes auth
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vault-auth
+  namespace: external-secrets
+---
+# ClusterRoleBinding required for Vault to validate ServiceAccount tokens
+# via the Kubernetes TokenReview API
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: external-secrets-vault-auth-delegator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+  - kind: ServiceAccount
+    name: vault-auth
+    namespace: external-secrets

@@ -1,0 +1,44 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: external-secrets
+  namespace: external-secrets
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: external-secrets
+      version: "0.10.x"  # Will get latest 0.10.x patch version
+      sourceRef:
+        kind: HelmRepository
+        name: external-secrets
+        namespace: external-secrets
+      interval: 24h
+  install:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  values:
+    # Install CRDs with the chart
+    installCRDs: true
+
+    # Controller configuration
+    replicaCount: 1
+
+    # Webhook configuration
+    webhook:
+      replicaCount: 1
+
+    # Cert controller for webhook certificates
+    certController:
+      replicaCount: 1
+
+    # Service account for Vault Kubernetes auth
+    serviceAccount:
+      create: true
+      name: external-secrets
+      annotations: {}

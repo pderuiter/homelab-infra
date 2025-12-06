@@ -1,0 +1,4 @@
+# Scripts directory - contains local setup scripts that may have sensitive commands
+# These scripts are for local execution only and should not be committed
+scripts/
+PROGRESS.md

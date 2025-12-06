@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - external-secrets
+  # Phase 2 - uncomment after ESO is working
+  # - metallb
+  # - traefik
+  # Phase 3 - uncomment after MetalLB/Traefik are working
+  # - cert-manager
+  # - external-dns
