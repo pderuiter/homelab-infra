@@ -1,0 +1,68 @@
+---
+- name: Prepare Longhorn storage disks on worker nodes
+  hosts: workers
+  become: true
+  vars:
+    longhorn_disk: "/dev/sdb"  # Adjust if your disk is different (e.g., /dev/nvme0n1)
+    longhorn_mount: "/var/lib/longhorn"
+    longhorn_label: "longhorn"
+
+  tasks:
+    - name: Install required packages
+      apt:
+        name:
+          - open-iscsi
+          - nfs-common
+          - parted
+        state: present
+        update_cache: true
+
+    - name: Enable and start iscsid service
+      systemd:
+        name: iscsid
+        enabled: true
+        state: started
+
+    - name: Check if disk is already partitioned
+      command: "lsblk -n -o FSTYPE {{ longhorn_disk }}"
+      register: disk_fstype
+      changed_when: false
+      failed_when: false
+
+    - name: Create GPT partition table
+      command: "parted -s {{ longhorn_disk }} mklabel gpt"
+      when: disk_fstype.stdout == ""
+
+    - name: Create partition
+      command: "parted -s {{ longhorn_disk }} mkpart primary ext4 0% 100%"
+      when: disk_fstype.stdout == ""
+
+    - name: Format partition with ext4
+      filesystem:
+        fstype: ext4
+        dev: "{{ longhorn_disk }}1"
+        opts: "-L {{ longhorn_label }}"
+      when: disk_fstype.stdout == ""
+
+    - name: Create Longhorn mount directory
+      file:
+        path: "{{ longhorn_mount }}"
+        state: directory
+        mode: '0755'
+
+    - name: Mount Longhorn disk
+      mount:
+        path: "{{ longhorn_mount }}"
+        src: "LABEL={{ longhorn_label }}"
+        fstype: ext4
+        opts: defaults
+        state: mounted
+
+    - name: Verify mount
+      command: "df -h {{ longhorn_mount }}"
+      register: mount_check
+      changed_when: false
+
+    - name: Show mount status
+      debug:
+        msg: "{{ mount_check.stdout_lines }}"

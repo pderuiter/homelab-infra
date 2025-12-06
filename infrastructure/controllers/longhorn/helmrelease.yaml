@@ -1,0 +1,78 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: longhorn
+  namespace: longhorn-system
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: longhorn
+      version: "1.7.x"
+      sourceRef:
+        kind: HelmRepository
+        name: longhorn
+        namespace: longhorn-system
+      interval: 12h
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    # Default settings
+    defaultSettings:
+      # Default replica count for volumes
+      defaultReplicaCount: 2
+      # Storage path on nodes
+      defaultDataPath: /var/lib/longhorn
+      # Guaranteed engine manager CPU
+      guaranteedEngineManagerCPU: 12
+      # Guaranteed replica manager CPU
+      guaranteedReplicaManagerCPU: 12
+      # Storage over-provisioning percentage
+      storageOverProvisioningPercentage: 100
+      # Storage minimal available percentage
+      storageMinimalAvailablePercentage: 15
+      # Node down pod deletion policy
+      nodeDownPodDeletionPolicy: delete-both-statefulset-and-deployment-pod
+      # Backup target (can be configured later for NFS)
+      # backupTarget: nfs://192.168.2.x:/backup/longhorn
+
+    persistence:
+      # Default StorageClass
+      defaultClass: true
+      defaultClassReplicaCount: 2
+      # RWX support via NFS
+      defaultFsType: ext4
+      reclaimPolicy: Delete
+
+    # Ingress for UI (optional, uses Traefik)
+    ingress:
+      enabled: true
+      ingressClassName: traefik
+      host: longhorn.bsdserver.nl
+      tls: true
+      tlsSecret: longhorn-tls
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-production
+
+    # Resource limits
+    longhornManager:
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+
+    longhornDriver:
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+
+    longhornUI:
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
