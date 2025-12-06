@@ -83,6 +83,8 @@ spec:
     gateway:
       enabled: true
       replicas: 1
+      nginxConfig:
+        resolver: coredns.kube-system.svc.cluster.local.
       resources:
         requests:
           cpu: 50m
