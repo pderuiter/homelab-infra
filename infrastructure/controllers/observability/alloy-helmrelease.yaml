@@ -77,24 +77,6 @@ spec:
             }
           }
 
-          // Discover Kubernetes nodes for node metrics
-          discovery.kubernetes "nodes" {
-            role = "node"
-          }
-
-          // Scrape node metrics from node-exporter
-          prometheus.scrape "node_exporter" {
-            targets = discovery.kubernetes.nodes.targets
-            forward_to = [prometheus.remote_write.default.receiver]
-
-            relabel_configs {
-              source_labels = ["__address__"]
-              regex         = "(.+):(.+)"
-              replacement   = "$1:9100"
-              target_label  = "__address__"
-            }
-          }
-
           // vSphere Exporter scrape
           prometheus.scrape "vsphere" {
             targets = [
