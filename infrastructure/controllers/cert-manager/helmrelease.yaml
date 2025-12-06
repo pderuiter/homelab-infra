@@ -38,6 +38,12 @@ spec:
         cpu: 100m
         memory: 128Mi
 
+    # Tolerations for control plane nodes
+    tolerations:
+      - key: "node-role.kubernetes.io/control-plane"
+        operator: "Exists"
+        effect: "NoSchedule"
+
     # Webhook configuration
     webhook:
       replicaCount: 1
@@ -48,6 +54,10 @@ spec:
         limits:
           cpu: 100m
           memory: 128Mi
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
 
     # CA Injector
     cainjector:
@@ -59,25 +69,11 @@ spec:
         limits:
           cpu: 100m
           memory: 128Mi
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
 
     # Prometheus monitoring
     prometheus:
       enabled: false
-
-    # Tolerations for control plane nodes
-    tolerations:
-      - key: "node-role.kubernetes.io/control-plane"
-        operator: "Exists"
-        effect: "NoSchedule"
-
-    webhook:
-      tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
-
-    cainjector:
-      tolerations:
-        - key: "node-role.kubernetes.io/control-plane"
-          operator: "Exists"
-          effect: "NoSchedule"
