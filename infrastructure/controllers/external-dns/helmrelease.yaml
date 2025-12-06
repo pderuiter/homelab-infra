@@ -34,7 +34,6 @@ spec:
       - --rfc2136-port=53
       - --rfc2136-zone=bsdserver.nl
       - --rfc2136-tsig-axfr
-      - --rfc2136-insecure=false
 
     # Domain filter
     domainFilters:
