@@ -198,7 +198,7 @@ spec:
           memory: 512Mi
 
       # vSphere credentials from secret
-      extraEnvFrom:
+      envFrom:
         - secretRef:
             name: vsphere-credentials
 
