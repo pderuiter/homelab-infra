@@ -30,8 +30,6 @@ spec:
       storageOverProvisioningPercentage: 100
       storageMinimalAvailablePercentage: 15
       nodeDownPodDeletionPolicy: delete-both-statefulset-and-deployment-pod
-      # Only schedule on nodes without control-plane role
-      systemManagedComponentsNodeSelector: "node-role.kubernetes.io/control-plane:false"
       # Backup target (can be configured later for NFS)
       # backupTarget: nfs://192.168.2.x:/backup/longhorn
 
