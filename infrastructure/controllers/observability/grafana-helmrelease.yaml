@@ -152,10 +152,6 @@ spec:
           gnetId: 13639
           revision: 2
           datasource: Loki
-        vsphere:
-          gnetId: 8159
-          revision: 3
-          datasource: Prometheus
         longhorn:
           gnetId: 16888
           revision: 11
