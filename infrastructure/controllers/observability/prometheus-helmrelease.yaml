@@ -30,6 +30,9 @@ spec:
     # Prometheus configuration
     prometheus:
       prometheusSpec:
+        # Enable remote write receiver for Alloy to push metrics
+        enableRemoteWriteReceiver: true
+
         retention: 15d
         retentionSize: 18GB
         replicas: 1
