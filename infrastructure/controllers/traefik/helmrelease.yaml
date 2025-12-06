@@ -62,12 +62,10 @@ spec:
       annotations: {}
       spec: {}
 
-    # Enable Traefik dashboard (internal only)
+    # Disable default dashboard IngressRoute - we create our own with hostname
     ingressRoute:
       dashboard:
-        enabled: true
-        entryPoints:
-          - websecure
+        enabled: false
 
     # Logs
     logs:
