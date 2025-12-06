@@ -158,7 +158,7 @@ spec:
           datasource: Prometheus
         longhorn:
           gnetId: 16888
-          revision: 9
+          revision: 11
           datasource: Prometheus
 
     # Grafana configuration
