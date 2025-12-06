@@ -26,7 +26,9 @@ spec:
       name: rfc2136
 
     # Environment variables from secret
-    extraEnvVarsSecret: rfc2136-credentials
+    envFrom:
+      - secretRef:
+          name: rfc2136-credentials
 
     # RFC2136 specific configuration
     extraArgs:
