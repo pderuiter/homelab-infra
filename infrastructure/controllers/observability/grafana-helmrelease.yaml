@@ -1,0 +1,192 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: grafana
+  namespace: observability
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: grafana
+      version: "8.x"
+      sourceRef:
+        kind: HelmRepository
+        name: grafana
+        namespace: observability
+      interval: 12h
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    replicas: 1
+
+    # Admin credentials from Vault
+    admin:
+      existingSecret: grafana-credentials
+      userKey: admin-user
+      passwordKey: admin-password
+
+    # Persistence
+    persistence:
+      enabled: true
+      storageClassName: longhorn
+      size: 10Gi
+
+    # Resources
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+    # Ingress
+    ingress:
+      enabled: true
+      ingressClassName: traefik
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-production
+      hosts:
+        - grafana.bsdserver.nl
+      tls:
+        - secretName: grafana-tls
+          hosts:
+            - grafana.bsdserver.nl
+
+    # Data sources
+    datasources:
+      datasources.yaml:
+        apiVersion: 1
+        datasources:
+          - name: Prometheus
+            type: prometheus
+            url: http://kube-prometheus-stack-prometheus.observability.svc:9090
+            access: proxy
+            isDefault: true
+            editable: false
+          - name: Loki
+            type: loki
+            url: http://loki-gateway.observability.svc:80
+            access: proxy
+            editable: false
+          - name: Alertmanager
+            type: alertmanager
+            url: http://kube-prometheus-stack-alertmanager.observability.svc:9093
+            access: proxy
+            editable: false
+            jsonData:
+              implementation: prometheus
+
+    # Dashboard providers
+    dashboardProviders:
+      dashboardproviders.yaml:
+        apiVersion: 1
+        providers:
+          - name: 'default'
+            orgId: 1
+            folder: ''
+            type: file
+            disableDeletion: false
+            editable: true
+            options:
+              path: /var/lib/grafana/dashboards/default
+          - name: 'kubernetes'
+            orgId: 1
+            folder: 'Kubernetes'
+            type: file
+            disableDeletion: false
+            editable: true
+            options:
+              path: /var/lib/grafana/dashboards/kubernetes
+          - name: 'infrastructure'
+            orgId: 1
+            folder: 'Infrastructure'
+            type: file
+            disableDeletion: false
+            editable: true
+            options:
+              path: /var/lib/grafana/dashboards/infrastructure
+
+    # Dashboards from grafana.com
+    dashboards:
+      default:
+        node-exporter-full:
+          gnetId: 1860
+          revision: 37
+          datasource: Prometheus
+      kubernetes:
+        k8s-system-api-server:
+          gnetId: 15761
+          revision: 17
+          datasource: Prometheus
+        k8s-views-global:
+          gnetId: 15757
+          revision: 37
+          datasource: Prometheus
+        k8s-views-namespaces:
+          gnetId: 15758
+          revision: 35
+          datasource: Prometheus
+        k8s-views-nodes:
+          gnetId: 15759
+          revision: 29
+          datasource: Prometheus
+        k8s-views-pods:
+          gnetId: 15760
+          revision: 28
+          datasource: Prometheus
+      infrastructure:
+        traefik:
+          gnetId: 17346
+          revision: 9
+          datasource: Prometheus
+        minio:
+          gnetId: 13502
+          revision: 26
+          datasource: Prometheus
+        loki-logs:
+          gnetId: 13639
+          revision: 2
+          datasource: Loki
+        vsphere:
+          gnetId: 8159
+          revision: 3
+          datasource: Prometheus
+        longhorn:
+          gnetId: 16888
+          revision: 9
+          datasource: Prometheus
+
+    # Grafana configuration
+    grafana.ini:
+      server:
+        root_url: https://grafana.bsdserver.nl
+      analytics:
+        check_for_updates: false
+        reporting_enabled: false
+      security:
+        disable_gravatar: true
+      users:
+        allow_sign_up: false
+
+    # Affinity
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: node-role.kubernetes.io/control-plane
+                  operator: DoesNotExist
+
+    # Sidecar for dashboards
+    sidecar:
+      dashboards:
+        enabled: true
+        searchNamespace: ALL
+      datasources:
+        enabled: true
+        searchNamespace: ALL

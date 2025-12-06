@@ -1,0 +1,113 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: loki
+  namespace: observability
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: loki
+      version: "6.x"
+      sourceRef:
+        kind: HelmRepository
+        name: grafana
+        namespace: observability
+      interval: 12h
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    # Deploy in single binary mode for homelab
+    deploymentMode: SingleBinary
+
+    loki:
+      auth_enabled: false
+
+      commonConfig:
+        replication_factor: 1
+
+      storage:
+        type: filesystem
+
+      schemaConfig:
+        configs:
+          - from: "2024-01-01"
+            store: tsdb
+            object_store: filesystem
+            schema: v13
+            index:
+              prefix: index_
+              period: 24h
+
+      limits_config:
+        retention_period: 720h  # 30 days
+        ingestion_rate_mb: 10
+        ingestion_burst_size_mb: 20
+        max_query_series: 10000
+
+    # Single binary deployment
+    singleBinary:
+      replicas: 1
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 1Gi
+      persistence:
+        enabled: true
+        storageClass: longhorn
+        size: 50Gi
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: DoesNotExist
+
+    # Disable other deployment modes
+    read:
+      replicas: 0
+    write:
+      replicas: 0
+    backend:
+      replicas: 0
+
+    # Gateway
+    gateway:
+      enabled: true
+      replicas: 1
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 200m
+          memory: 128Mi
+
+    # Disable minio - using filesystem
+    minio:
+      enabled: false
+
+    # Disable chunk cache
+    chunksCache:
+      enabled: false
+
+    # Disable results cache
+    resultsCache:
+      enabled: false
+
+    # Monitoring
+    monitoring:
+      selfMonitoring:
+        enabled: false
+        grafanaAgent:
+          installOperator: false
+      lokiCanary:
+        enabled: false

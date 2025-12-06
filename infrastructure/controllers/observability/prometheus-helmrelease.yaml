@@ -1,0 +1,197 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kube-prometheus-stack
+  namespace: observability
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: kube-prometheus-stack
+      version: "67.x"
+      sourceRef:
+        kind: HelmRepository
+        name: prometheus-community
+        namespace: observability
+      interval: 12h
+  install:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  values:
+    # Disable built-in Grafana - we deploy it separately
+    grafana:
+      enabled: false
+
+    # Prometheus configuration
+    prometheus:
+      prometheusSpec:
+        retention: 30d
+        retentionSize: 45GB
+        replicas: 1
+
+        # Storage
+        storageSpec:
+          volumeClaimTemplate:
+            spec:
+              storageClassName: longhorn
+              accessModes: ["ReadWriteOnce"]
+              resources:
+                requests:
+                  storage: 50Gi
+
+        # Resource limits
+        resources:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 2Gi
+
+        # Additional scrape configs for Traefik, MinIO, vSphere
+        additionalScrapeConfigs:
+          # Traefik metrics
+          - job_name: 'traefik'
+            static_configs:
+              - targets: ['traefik-metrics.traefik.svc:9100']
+
+          # MinIO metrics
+          - job_name: 'minio'
+            metrics_path: /minio/v2/metrics/cluster
+            scheme: http
+            static_configs:
+              - targets: ['minio.minio.svc:9000']
+
+        # Pod affinity - schedule on workers
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: node-role.kubernetes.io/control-plane
+                      operator: DoesNotExist
+
+      # Ingress for Prometheus UI
+      ingress:
+        enabled: true
+        ingressClassName: traefik
+        annotations:
+          cert-manager.io/cluster-issuer: letsencrypt-production
+        hosts:
+          - prometheus.bsdserver.nl
+        tls:
+          - secretName: prometheus-tls
+            hosts:
+              - prometheus.bsdserver.nl
+
+    # Alertmanager configuration
+    alertmanager:
+      alertmanagerSpec:
+        replicas: 1
+        storage:
+          volumeClaimTemplate:
+            spec:
+              storageClassName: longhorn
+              accessModes: ["ReadWriteOnce"]
+              resources:
+                requests:
+                  storage: 5Gi
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+
+      # Ingress for Alertmanager
+      ingress:
+        enabled: true
+        ingressClassName: traefik
+        annotations:
+          cert-manager.io/cluster-issuer: letsencrypt-production
+        hosts:
+          - alertmanager.bsdserver.nl
+        tls:
+          - secretName: alertmanager-tls
+            hosts:
+              - alertmanager.bsdserver.nl
+
+      # Alertmanager config for ntfy
+      config:
+        global:
+          resolve_timeout: 5m
+        route:
+          group_by: ['alertname', 'namespace']
+          group_wait: 30s
+          group_interval: 5m
+          repeat_interval: 4h
+          receiver: 'ntfy'
+          routes:
+            - receiver: 'null'
+              matchers:
+                - alertname = "Watchdog"
+        receivers:
+          - name: 'null'
+          - name: 'ntfy'
+            webhook_configs:
+              - url: 'http://ntfy.observability.svc:80/alerts'
+                send_resolved: true
+
+    # Node exporter
+    nodeExporter:
+      enabled: true
+
+    # Kube-state-metrics
+    kubeStateMetrics:
+      enabled: true
+
+    # Prometheus Operator
+    prometheusOperator:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          cpu: 200m
+          memory: 256Mi
+
+    # Default rules
+    defaultRules:
+      create: true
+      rules:
+        alertmanager: true
+        etcd: true
+        configReloaders: true
+        general: true
+        k8sContainerCpuUsageSecondsTotal: true
+        k8sContainerMemoryWorkingSetBytes: true
+        k8sPodOwner: true
+        kubeApiserverAvailability: true
+        kubeApiserverBurnrate: true
+        kubeApiserverHistogram: true
+        kubeApiserverSlos: true
+        kubeControllerManager: true
+        kubelet: true
+        kubeProxy: true
+        kubePrometheusGeneral: true
+        kubePrometheusNodeRecording: true
+        kubernetesApps: true
+        kubernetesResources: true
+        kubernetesStorage: true
+        kubernetesSystem: true
+        kubeSchedulerAlerting: true
+        kubeSchedulerRecording: true
+        kubeStateMetrics: true
+        network: true
+        node: true
+        nodeExporterAlerting: true
+        nodeExporterRecording: true
+        prometheus: true
+        prometheusOperator: true
+        windows: false

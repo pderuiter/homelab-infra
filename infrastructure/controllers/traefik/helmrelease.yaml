@@ -70,6 +70,27 @@ spec:
       access:
         enabled: true
 
+    # Metrics for Prometheus
+    metrics:
+      prometheus:
+        entryPoint: metrics
+        addEntryPointsLabels: true
+        addRoutersLabels: true
+        addServicesLabels: true
+        service:
+          enabled: true
+        serviceMonitor:
+          enabled: false
+
+    # Add metrics port
+    ports:
+      metrics:
+        port: 9100
+        expose:
+          default: false
+        exposedPort: 9100
+        protocol: TCP
+
     # Providers
     providers:
       kubernetesCRD:

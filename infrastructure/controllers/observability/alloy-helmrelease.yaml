@@ -1,0 +1,146 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: alloy
+  namespace: observability
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: alloy
+      version: "0.x"
+      sourceRef:
+        kind: HelmRepository
+        name: grafana
+        namespace: observability
+      interval: 12h
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    alloy:
+      configMap:
+        content: |
+          // Discover Kubernetes pods for log collection
+          discovery.kubernetes "pods" {
+            role = "pod"
+          }
+
+          // Relabel pod logs
+          discovery.relabel "pods" {
+            targets = discovery.kubernetes.pods.targets
+
+            rule {
+              source_labels = ["__meta_kubernetes_namespace"]
+              target_label  = "namespace"
+            }
+            rule {
+              source_labels = ["__meta_kubernetes_pod_name"]
+              target_label  = "pod"
+            }
+            rule {
+              source_labels = ["__meta_kubernetes_pod_container_name"]
+              target_label  = "container"
+            }
+            rule {
+              source_labels = ["__meta_kubernetes_pod_label_app"]
+              target_label  = "app"
+            }
+            rule {
+              source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name"]
+              target_label  = "app_name"
+            }
+            rule {
+              source_labels = ["__meta_kubernetes_pod_node_name"]
+              target_label  = "node"
+            }
+          }
+
+          // Collect pod logs
+          loki.source.kubernetes "pods" {
+            targets    = discovery.relabel.pods.output
+            forward_to = [loki.write.default.receiver]
+          }
+
+          // Collect Kubernetes events as logs
+          loki.source.kubernetes_events "events" {
+            forward_to = [loki.write.default.receiver]
+          }
+
+          // Send logs to Loki
+          loki.write "default" {
+            endpoint {
+              url = "http://loki-gateway.observability.svc:80/loki/api/v1/push"
+            }
+          }
+
+          // Discover Kubernetes nodes for node metrics
+          discovery.kubernetes "nodes" {
+            role = "node"
+          }
+
+          // Scrape node metrics from node-exporter
+          prometheus.scrape "node_exporter" {
+            targets = discovery.kubernetes.nodes.targets
+            forward_to = [prometheus.remote_write.default.receiver]
+
+            relabel_configs {
+              source_labels = ["__address__"]
+              regex         = "(.+):(.+)"
+              replacement   = "$1:9100"
+              target_label  = "__address__"
+            }
+          }
+
+          // vSphere Exporter scrape
+          prometheus.scrape "vsphere" {
+            targets = [
+              {"__address__" = "vmware-exporter.observability.svc:9272"},
+            ]
+            forward_to = [prometheus.remote_write.default.receiver]
+            scrape_interval = "60s"
+            scrape_timeout  = "30s"
+          }
+
+          // Remote write to Prometheus
+          prometheus.remote_write "default" {
+            endpoint {
+              url = "http://kube-prometheus-stack-prometheus.observability.svc:9090/api/v1/write"
+            }
+          }
+
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          cpu: 200m
+          memory: 256Mi
+
+    controller:
+      type: daemonset
+
+    # Need to mount host paths for log collection
+    extraMounts:
+      - name: varlog
+        mountPath: /var/log
+        hostPath:
+          path: /var/log
+          type: Directory
+        readOnly: true
+      - name: varlibdockercontainers
+        mountPath: /var/lib/docker/containers
+        hostPath:
+          path: /var/lib/docker/containers
+          type: Directory
+        readOnly: true
+
+    serviceAccount:
+      create: true
+
+    # RBAC for Kubernetes discovery
+    rbac:
+      create: true
