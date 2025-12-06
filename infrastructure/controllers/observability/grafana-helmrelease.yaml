@@ -23,6 +23,10 @@ spec:
   values:
     replicas: 1
 
+    # Use Recreate strategy for RWO volume compatibility
+    deploymentStrategy:
+      type: Recreate
+
     # Admin credentials from Vault
     admin:
       existingSecret: grafana-credentials
