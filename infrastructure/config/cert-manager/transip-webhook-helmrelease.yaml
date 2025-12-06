@@ -35,12 +35,6 @@ spec:
   values:
     groupName: acme.bsdserver.nl
 
-    # TransIP credentials secret
-    transip:
-      accountName: pderuiter
-      existingSecretName: transip-credentials
-      existingSecretKey: privateKey
-
     # Resource limits
     resources:
       requests:
