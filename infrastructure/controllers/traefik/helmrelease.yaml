@@ -48,6 +48,12 @@ spec:
         protocol: TCP
         tls:
           enabled: true
+      metrics:
+        port: 9100
+        expose:
+          default: false
+        exposedPort: 9100
+        protocol: TCP
 
     # Service configuration - use MetalLB
     service:
@@ -81,15 +87,6 @@ spec:
           enabled: true
         serviceMonitor:
           enabled: false
-
-    # Add metrics port
-    ports:
-      metrics:
-        port: 9100
-        expose:
-          default: false
-        exposedPort: 9100
-        protocol: TCP
 
     # Providers
     providers:
