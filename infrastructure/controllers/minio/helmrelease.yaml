@@ -1,0 +1,114 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: minio
+  namespace: minio
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: minio
+      version: "5.x"
+      sourceRef:
+        kind: HelmRepository
+        name: minio
+        namespace: minio
+      interval: 12h
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    # Deployment mode: distributed with 4 nodes
+    mode: distributed
+
+    # Number of MinIO containers running
+    replicas: 4
+
+    # Number of drives per node (1 drive per node for simplicity)
+    drivesPerNode: 1
+
+    # Total pools (1 pool with 4 nodes)
+    pools: 1
+
+    # Persistent storage using Longhorn
+    persistence:
+      enabled: true
+      storageClass: longhorn
+      size: 25Gi
+      accessMode: ReadWriteOnce
+
+    # Use existing secret for credentials
+    existingSecret: minio-credentials
+
+    # Resource requests/limits
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+    # Service configuration
+    service:
+      type: ClusterIP
+      port: 9000
+
+    # Console service
+    consoleService:
+      type: ClusterIP
+      port: 9001
+
+    # Ingress for S3 API
+    ingress:
+      enabled: true
+      ingressClassName: traefik
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-production
+      hosts:
+        - minio-k8s.bsdserver.nl
+      tls:
+        - secretName: minio-api-tls
+          hosts:
+            - minio-k8s.bsdserver.nl
+
+    # Ingress for Console
+    consoleIngress:
+      enabled: true
+      ingressClassName: traefik
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-production
+      hosts:
+        - minio-console.bsdserver.nl
+      tls:
+        - secretName: minio-console-tls
+          hosts:
+            - minio-console.bsdserver.nl
+
+    # Node affinity - only schedule on worker nodes
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: node-role.kubernetes.io/control-plane
+                  operator: DoesNotExist
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - minio
+              topologyKey: kubernetes.io/hostname
+
+    # Environment variables
+    environment:
+      MINIO_BROWSER_REDIRECT_URL: "https://minio-console.bsdserver.nl"
+      MINIO_SERVER_URL: "https://minio-k8s.bsdserver.nl"
