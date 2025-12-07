@@ -34,7 +34,7 @@ metadata:
     app.kubernetes.io/component: backup
 spec:
   # Weekly full backup on Sunday at 3:00 AM UTC
-  schedule: "0 3 * * 0"
+  schedule: "0 3 * * 7"
 
   suspend: false
   backupOwnerReference: self
