@@ -484,12 +484,9 @@ spec:
       - host all all 172.16.0.0/12 scram-sha-256
       - host all all 192.168.0.0/16 scram-sha-256
 
+  # Disable auto-created PodMonitor - we create a custom one with the required labels
   monitoring:
-    enablePodMonitor: true
-    podMonitorMetricRelabelings:
-      - sourceLabels: [cluster]
-        targetLabel: cnpg_cluster
-        action: replace
+    enablePodMonitor: false
 
   superuserSecret:
     name: postgres-superuser-credentials
@@ -617,7 +614,62 @@ See the full file in the repository. It includes:
 - `postgres-cluster-pooler-rw`: Read-write pooler (2 instances)
 - `postgres-cluster-pooler-ro`: Read-only pooler (2 instances)
 
-### 4.8 Prometheus Alert Rules
+### 4.8 Custom PodMonitor for Prometheus
+
+**File: `podmonitor.yaml`**
+
+CNPG's auto-created PodMonitor doesn't include labels required for Prometheus discovery (e.g., `release: kube-prometheus-stack`). Since CNPG API doesn't support custom labels on PodMonitors, we disable the auto-created one and create a custom PodMonitor.
+
+```yaml
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: postgres-cluster
+  namespace: databases
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/component: database
+    # Required for Prometheus to discover this PodMonitor
+    release: kube-prometheus-stack
+spec:
+  namespaceSelector:
+    matchNames:
+      - databases
+  selector:
+    matchLabels:
+      cnpg.io/cluster: postgres-cluster
+      cnpg.io/podRole: instance
+  podMetricsEndpoints:
+    - port: metrics
+      metricRelabelings:
+        - sourceLabels: [cluster]
+          targetLabel: cnpg_cluster
+          action: replace
+---
+# PodMonitor for PgBouncer poolers
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: postgres-cluster-pooler
+  namespace: databases
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/component: pooler
+    release: kube-prometheus-stack
+spec:
+  namespaceSelector:
+    matchNames:
+      - databases
+  selector:
+    matchLabels:
+      cnpg.io/cluster: postgres-cluster
+      cnpg.io/poolerName: postgres-cluster-pooler-rw
+  podMetricsEndpoints:
+    - port: metrics
+```
+
+### 4.9 Prometheus Alert Rules
 
 **File: `prometheusrules.yaml`**
 
@@ -629,13 +681,13 @@ See the full file in the repository. Includes alerts for:
 - Backups (failed, stale, WAL archiving issues)
 - Performance (high latency, low cache hit ratio, deadlocks)
 
-### 4.9 Grafana Dashboard
+### 4.10 Grafana Dashboard
 
 **File: `grafana-dashboard.yaml`**
 
 ConfigMap containing the Grafana dashboard JSON for CloudNative-PG monitoring.
 
-### 4.10 Kustomization
+### 4.11 Kustomization
 
 **File: `kustomization.yaml`**
 ```yaml
@@ -649,6 +701,7 @@ resources:
   - scheduled-backup.yaml
   - maintenance-cronjob.yaml
   - pooler.yaml
+  - podmonitor.yaml
   - prometheusrules.yaml
   - grafana-dashboard.yaml
 ```
