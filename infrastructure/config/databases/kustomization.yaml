@@ -8,5 +8,6 @@ resources:
   - scheduled-backup.yaml
   - maintenance-cronjob.yaml
   - pooler.yaml
+  - podmonitor.yaml
   - prometheusrules.yaml
   - grafana-dashboard.yaml

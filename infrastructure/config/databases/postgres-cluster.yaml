@@ -64,16 +64,9 @@ spec:
       - host all all 172.16.0.0/12 scram-sha-256
       - host all all 192.168.0.0/16 scram-sha-256
 
-  # Enable PodMonitor for Prometheus
+  # Disable auto-created PodMonitor - we create a custom one with the required labels
   monitoring:
-    enablePodMonitor: true
-    # Required label for Prometheus to discover this PodMonitor
-    podMonitorLabels:
-      release: kube-prometheus-stack
-    podMonitorMetricRelabelings:
-      - sourceLabels: [cluster]
-        targetLabel: cnpg_cluster
-        action: replace
+    enablePodMonitor: false
 
   # Superuser credentials from Vault via ExternalSecret
   superuserSecret:

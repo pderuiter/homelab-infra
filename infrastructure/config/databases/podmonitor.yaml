@@ -1,0 +1,46 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: postgres-cluster
+  namespace: databases
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/component: database
+    # Required for Prometheus to discover this PodMonitor
+    release: kube-prometheus-stack
+spec:
+  namespaceSelector:
+    matchNames:
+      - databases
+  selector:
+    matchLabels:
+      cnpg.io/cluster: postgres-cluster
+      cnpg.io/podRole: instance
+  podMetricsEndpoints:
+    - port: metrics
+      metricRelabelings:
+        - sourceLabels: [cluster]
+          targetLabel: cnpg_cluster
+          action: replace
+---
+# PodMonitor for PgBouncer poolers
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: postgres-cluster-pooler
+  namespace: databases
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/component: pooler
+    release: kube-prometheus-stack
+spec:
+  namespaceSelector:
+    matchNames:
+      - databases
+  selector:
+    matchLabels:
+      cnpg.io/cluster: postgres-cluster
+      cnpg.io/poolerName: postgres-cluster-pooler-rw
+  podMetricsEndpoints:
+    - port: metrics
