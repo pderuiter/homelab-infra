@@ -775,6 +775,136 @@ kubectl exec -n minio deploy/minio -- mc ls local/cnpg-backups/
 
 ## Troubleshooting
 
+### Grafana Dashboard Shows "No Data"
+
+This is typically caused by Prometheus not scraping the PostgreSQL metrics. Follow these steps:
+
+**1. Verify PodMonitors exist:**
+```bash
+kubectl get podmonitor -n databases
+# Should show: postgres-cluster, postgres-cluster-pooler
+```
+
+**2. Check PodMonitor has correct label for Prometheus discovery:**
+```bash
+kubectl get podmonitor postgres-cluster -n databases -o jsonpath='{.metadata.labels}' | jq .
+# Must include: "release": "kube-prometheus-stack"
+```
+
+**3. Verify Prometheus is scraping targets:**
+```bash
+kubectl exec -n observability prometheus-kube-prometheus-stack-prometheus-0 -- \
+  wget -qO- http://localhost:9090/api/v1/targets 2>/dev/null | \
+  jq -r '.data.activeTargets[] | select(.scrapePool | contains("databases")) | "\(.labels.pod) - \(.health)"'
+# Should show all postgres-cluster-* pods as "up"
+```
+
+**4. If PodMonitor is missing, re-apply it:**
+```bash
+kubectl apply -f infrastructure/config/databases/podmonitor.yaml
+flux reconcile kustomization infrastructure-config --with-source
+```
+
+**5. Verify metrics are being collected:**
+```bash
+kubectl exec -n observability prometheus-kube-prometheus-stack-prometheus-0 -- \
+  wget -qO- 'http://localhost:9090/api/v1/query?query=cnpg_collector_up' 2>/dev/null | jq '.data.result'
+# Should show value "1" for each PostgreSQL instance
+```
+
+### PodMonitor Not Discovered by Prometheus
+
+**Cause**: Prometheus Operator uses label selectors to discover PodMonitors. If your PodMonitor doesn't have the required labels, it won't be scraped.
+
+**Check Prometheus podMonitorSelector:**
+```bash
+kubectl get prometheus -n observability -o jsonpath='{.items[0].spec.podMonitorSelector}'
+# Typically: {"matchLabels":{"release":"kube-prometheus-stack"}}
+```
+
+**Solution**: The CNPG operator's auto-created PodMonitor doesn't include custom labels. We disable it and create our own:
+
+1. In `postgres-cluster.yaml`, set:
+   ```yaml
+   monitoring:
+     enablePodMonitor: false
+   ```
+
+2. Create custom `podmonitor.yaml` with required labels:
+   ```yaml
+   metadata:
+     labels:
+       release: kube-prometheus-stack  # Required!
+   ```
+
+### Grafana Dashboard Shows "Datasource Prometheus was not found"
+
+**Cause**: The dashboard JSON uses a datasource variable `${DS_PROMETHEUS}` that doesn't resolve.
+
+**Solution**: Replace datasource references with the actual datasource name:
+```bash
+# Check your Grafana datasource name
+kubectl get configmap -n observability -l grafana_datasource=1 -o yaml | grep -A5 "name:"
+
+# If using the official CNPG dashboard, fix datasource references:
+# Replace all "${DS_PROMETHEUS}" with "Prometheus" (or your datasource name)
+```
+
+### PodMonitor Disappears After Flux Reconciliation
+
+**Symptoms**: Metrics stop flowing after Flux reconciles, PodMonitor is missing.
+
+**Cause**: Flux may have issues applying multi-document YAML files, or there's a race condition.
+
+**Diagnosis:**
+```bash
+# Check if PodMonitor exists
+kubectl get podmonitor -n databases
+
+# Check Flux kustomization status
+flux get kustomization infrastructure-config
+
+# Check Flux events
+kubectl get events -n flux-system --sort-by='.lastTimestamp' | tail -20
+```
+
+**Solution:**
+```bash
+# Re-apply the PodMonitor manually
+kubectl apply -f infrastructure/config/databases/podmonitor.yaml
+
+# Force Flux to reconcile
+flux reconcile kustomization infrastructure-config --with-source
+
+# Verify both PodMonitors are created
+kubectl get podmonitor -n databases
+# Should show: postgres-cluster AND postgres-cluster-pooler
+```
+
+### Verifying End-to-End Monitoring
+
+Complete verification checklist:
+```bash
+# 1. PostgreSQL pods are exposing metrics
+kubectl exec -n databases postgres-cluster-1 -- curl -s localhost:9187/metrics | head -5
+
+# 2. PodMonitors exist with correct labels
+kubectl get podmonitor -n databases -o custom-columns=NAME:.metadata.name,RELEASE:.metadata.labels.release
+
+# 3. Prometheus has discovered targets
+kubectl exec -n observability prometheus-kube-prometheus-stack-prometheus-0 -- \
+  wget -qO- http://localhost:9090/api/v1/targets 2>/dev/null | \
+  jq '.data.activeTargets | length'
+
+# 4. Metrics are queryable
+kubectl exec -n observability prometheus-kube-prometheus-stack-prometheus-0 -- \
+  wget -qO- 'http://localhost:9090/api/v1/query?query=cnpg_pg_database_size_bytes' 2>/dev/null | \
+  jq '.data.result | length'
+
+# 5. Grafana dashboard ConfigMap exists
+kubectl get configmap -n databases -l grafana_dashboard=1
+```
+
 ### Longhorn Storage Issues
 
 If volumes are stuck in "faulted" state, check Longhorn node schedulability:
