@@ -5,4 +5,4 @@ resources:
   - metallb
   - cert-manager
   - external-dns
-  - databases
+  # - databases  # Uncomment after adding node resources
