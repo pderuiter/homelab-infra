@@ -1,0 +1,43 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: postgres-cluster-daily-backup
+  namespace: databases
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/component: backup
+spec:
+  # Daily backup at 2:00 AM UTC
+  schedule: "0 2 * * *"
+
+  # Suspend if needed
+  suspend: false
+
+  # Backup mode - full backup
+  backupOwnerReference: self
+
+  # Target cluster
+  cluster:
+    name: postgres-cluster
+
+  # Immediate backup on creation
+  immediate: true
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: postgres-cluster-weekly-backup
+  namespace: databases
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/component: backup
+spec:
+  # Weekly full backup on Sunday at 3:00 AM UTC
+  schedule: "0 3 * * 0"
+
+  suspend: false
+  backupOwnerReference: self
+
+  cluster:
+    name: postgres-cluster

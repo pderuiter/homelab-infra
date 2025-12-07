@@ -1,0 +1,152 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: postgres-cluster
+  namespace: databases
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/component: database
+spec:
+  # PostgreSQL version
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.4
+
+  # Full HA: 3 instances
+  instances: 3
+
+  # Async replication for better performance
+  minSyncReplicas: 0
+  maxSyncReplicas: 0
+
+  # Primary update strategy
+  primaryUpdateStrategy: unsupervised
+  primaryUpdateMethod: switchover
+
+  # PostgreSQL configuration
+  postgresql:
+    parameters:
+      # Memory settings (adjust based on your worker node resources)
+      shared_buffers: "256MB"
+      effective_cache_size: "768MB"
+      maintenance_work_mem: "64MB"
+      work_mem: "16MB"
+
+      # WAL settings
+      wal_buffers: "16MB"
+      min_wal_size: "256MB"
+      max_wal_size: "1GB"
+
+      # Checkpoints
+      checkpoint_completion_target: "0.9"
+      checkpoint_timeout: "15min"
+
+      # Query planner
+      random_page_cost: "1.1"
+      effective_io_concurrency: "200"
+
+      # Connections
+      max_connections: "200"
+
+      # Logging
+      log_statement: "ddl"
+      log_min_duration_statement: "1000"
+      log_checkpoints: "on"
+      log_lock_waits: "on"
+      log_temp_files: "0"
+
+      # Statistics
+      track_activities: "on"
+      track_counts: "on"
+      track_io_timing: "on"
+
+    pg_hba:
+      - host all all 10.0.0.0/8 scram-sha-256
+      - host all all 172.16.0.0/12 scram-sha-256
+      - host all all 192.168.0.0/16 scram-sha-256
+
+  # Enable PodMonitor for Prometheus
+  monitoring:
+    enablePodMonitor: true
+    podMonitorMetricRelabelings:
+      - sourceLabels: [cluster]
+        targetLabel: cnpg_cluster
+        action: replace
+
+  # Superuser credentials from Vault via ExternalSecret
+  superuserSecret:
+    name: postgres-superuser-credentials
+
+  # Bootstrap the cluster
+  bootstrap:
+    initdb:
+      database: app
+      owner: app
+      secret:
+        name: postgres-app-credentials
+      postInitSQL:
+        - CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+
+  # Storage configuration
+  storage:
+    storageClass: longhorn-database
+    size: 20Gi
+    pvcTemplate:
+      accessModes:
+        - ReadWriteOnce
+
+  # Separate WAL storage for better performance
+  walStorage:
+    storageClass: longhorn-database
+    size: 5Gi
+    pvcTemplate:
+      accessModes:
+        - ReadWriteOnce
+
+  # Backup configuration to MinIO
+  backup:
+    barmanObjectStore:
+      destinationPath: s3://cnpg-backups/postgres-cluster
+      endpointURL: http://minio.minio.svc.cluster.local:9000
+      s3Credentials:
+        accessKeyId:
+          name: cnpg-minio-credentials
+          key: ACCESS_KEY_ID
+        secretAccessKey:
+          name: cnpg-minio-credentials
+          key: SECRET_ACCESS_KEY
+      wal:
+        compression: gzip
+        maxParallel: 2
+      data:
+        compression: gzip
+        jobs: 2
+    retentionPolicy: "14d"
+
+  # Resource limits
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+
+  # Pod affinity - spread across nodes
+  affinity:
+    enablePodAntiAffinity: true
+    topologyKey: kubernetes.io/hostname
+    podAntiAffinityType: preferred
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: DoesNotExist
+
+  # Start delay for faster pod startup
+  startDelay: 30
+  stopDelay: 30
+
+  # Automatic failover
+  failoverDelay: 0
+  switchoverDelay: 30

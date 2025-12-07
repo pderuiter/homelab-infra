@@ -1,0 +1,208 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: postgres-cluster-alerts
+  namespace: databases
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/component: monitoring
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: cnpg.cluster
+      rules:
+        # Cluster is not healthy
+        - alert: CNPGClusterNotHealthy
+          expr: |
+            cnpg_collector_up{namespace="databases"} == 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "CNPG cluster {{ $labels.cluster }} is not healthy"
+            description: "CloudNativePG cluster {{ $labels.cluster }} in namespace {{ $labels.namespace }} is not responding to metrics collection."
+
+        # Primary instance not available
+        - alert: CNPGClusterNoPrimary
+          expr: |
+            sum by (cluster, namespace) (cnpg_pg_replication_is_replica{namespace="databases"} == 0) == 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "CNPG cluster {{ $labels.cluster }} has no primary"
+            description: "CloudNativePG cluster {{ $labels.cluster }} has no primary instance. Database writes are not possible."
+
+        # Replicas behind primary
+        - alert: CNPGReplicationLag
+          expr: |
+            cnpg_pg_replication_lag{namespace="databases"} > 30
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High replication lag in CNPG cluster {{ $labels.cluster }}"
+            description: "Replica {{ $labels.pod }} in cluster {{ $labels.cluster }} is {{ $value | humanizeDuration }} behind primary."
+
+        # Too few replicas
+        - alert: CNPGClusterDegraded
+          expr: |
+            cnpg_collector_instances_total{namespace="databases"} - cnpg_collector_instances_ready{namespace="databases"} > 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "CNPG cluster {{ $labels.cluster }} is degraded"
+            description: "CloudNativePG cluster {{ $labels.cluster }} has {{ $value }} unhealthy instance(s)."
+
+        # All replicas down
+        - alert: CNPGClusterCritical
+          expr: |
+            cnpg_collector_instances_ready{namespace="databases"} < 2
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "CNPG cluster {{ $labels.cluster }} is critically degraded"
+            description: "CloudNativePG cluster {{ $labels.cluster }} has fewer than 2 healthy instances. High availability is compromised."
+
+    - name: cnpg.storage
+      rules:
+        # Storage nearly full
+        - alert: CNPGStorageNearlyFull
+          expr: |
+            (cnpg_pg_database_size_bytes{namespace="databases"} / (20 * 1024 * 1024 * 1024)) * 100 > 80
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "PostgreSQL storage nearly full in {{ $labels.cluster }}"
+            description: "Database {{ $labels.datname }} in cluster {{ $labels.cluster }} is using {{ $value | printf \"%.1f\" }}% of allocated storage."
+
+        # Storage critically full
+        - alert: CNPGStorageCritical
+          expr: |
+            (cnpg_pg_database_size_bytes{namespace="databases"} / (20 * 1024 * 1024 * 1024)) * 100 > 90
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "PostgreSQL storage critical in {{ $labels.cluster }}"
+            description: "Database {{ $labels.datname }} in cluster {{ $labels.cluster }} is using {{ $value | printf \"%.1f\" }}% of allocated storage. Immediate action required."
+
+        # WAL storage full
+        - alert: CNPGWALStorageHigh
+          expr: |
+            cnpg_pg_wal_bytes{namespace="databases"} > (4 * 1024 * 1024 * 1024)
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High WAL usage in {{ $labels.cluster }}"
+            description: "WAL storage in cluster {{ $labels.cluster }} is {{ $value | humanize1024 }}. This may indicate backup issues or high transaction volume."
+
+    - name: cnpg.connections
+      rules:
+        # Too many connections
+        - alert: CNPGHighConnectionCount
+          expr: |
+            cnpg_pg_stat_activity_connections{namespace="databases", state="active"} > 150
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High connection count in {{ $labels.cluster }}"
+            description: "PostgreSQL cluster {{ $labels.cluster }} has {{ $value }} active connections."
+
+        # Connection pool exhaustion
+        - alert: CNPGConnectionPoolExhausted
+          expr: |
+            cnpg_pg_stat_activity_connections{namespace="databases"} / 200 > 0.9
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Connection pool nearly exhausted in {{ $labels.cluster }}"
+            description: "PostgreSQL cluster {{ $labels.cluster }} is at {{ $value | printf \"%.0f\" }}% connection capacity."
+
+        # Long-running queries
+        - alert: CNPGLongRunningQueries
+          expr: |
+            max by (cluster, namespace) (cnpg_pg_stat_activity_max_tx_duration_seconds{namespace="databases"}) > 3600
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Long-running transactions in {{ $labels.cluster }}"
+            description: "Cluster {{ $labels.cluster }} has transactions running for over {{ $value | humanizeDuration }}."
+
+    - name: cnpg.backup
+      rules:
+        # Backup failed
+        - alert: CNPGBackupFailed
+          expr: |
+            cnpg_collector_last_failed_backup_timestamp{namespace="databases"} > cnpg_collector_last_available_backup_timestamp{namespace="databases"}
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Backup failed for {{ $labels.cluster }}"
+            description: "The last backup for CloudNativePG cluster {{ $labels.cluster }} has failed."
+
+        # Backup too old
+        - alert: CNPGBackupStale
+          expr: |
+            time() - cnpg_collector_last_available_backup_timestamp{namespace="databases"} > 86400
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Backup stale for {{ $labels.cluster }}"
+            description: "The last successful backup for cluster {{ $labels.cluster }} is older than 24 hours."
+
+        # WAL archiving behind
+        - alert: CNPGWALArchivingBehind
+          expr: |
+            cnpg_pg_stat_archiver_failed_count{namespace="databases"} > 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "WAL archiving issues in {{ $labels.cluster }}"
+            description: "WAL archiving for cluster {{ $labels.cluster }} has {{ $value }} failed archive attempts."
+
+    - name: cnpg.performance
+      rules:
+        # High query latency
+        - alert: CNPGHighQueryLatency
+          expr: |
+            rate(cnpg_pg_stat_statements_total_time_seconds{namespace="databases"}[5m]) / rate(cnpg_pg_stat_statements_calls{namespace="databases"}[5m]) > 1
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High query latency in {{ $labels.cluster }}"
+            description: "Average query time in cluster {{ $labels.cluster }} is {{ $value | printf \"%.2f\" }} seconds."
+
+        # Cache hit ratio low
+        - alert: CNPGLowCacheHitRatio
+          expr: |
+            cnpg_pg_stat_bgwriter_buffers_backend / (cnpg_pg_stat_bgwriter_buffers_backend + cnpg_pg_stat_bgwriter_buffers_clean + cnpg_pg_stat_bgwriter_buffers_checkpoint) > 0.1
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Low buffer cache efficiency in {{ $labels.cluster }}"
+            description: "PostgreSQL cluster {{ $labels.cluster }} has a high rate of backend buffer writes, indicating potential memory pressure."
+
+        # Deadlocks detected
+        - alert: CNPGDeadlocksDetected
+          expr: |
+            increase(cnpg_pg_stat_database_deadlocks{namespace="databases"}[15m]) > 0
+          for: 1m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Deadlocks detected in {{ $labels.cluster }}"
+            description: "{{ $value }} deadlock(s) detected in database {{ $labels.datname }} in cluster {{ $labels.cluster }}."

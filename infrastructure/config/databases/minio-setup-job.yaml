@@ -1,0 +1,105 @@
+---
+# One-time Job to create MinIO bucket and user for CNPG backups
+# This Job is idempotent and can be re-run safely
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: minio-cnpg-setup
+  namespace: databases
+  labels:
+    app.kubernetes.io/name: minio-setup
+    app.kubernetes.io/component: backup-setup
+  annotations:
+    # Allow Flux to replace this Job if it already exists
+    kustomize.toolkit.fluxcd.io/force: "enabled"
+spec:
+  ttlSecondsAfterFinished: 86400
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: minio-setup
+        app.kubernetes.io/component: backup-setup
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: default
+      containers:
+        - name: minio-setup
+          image: minio/mc:latest
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              echo "Setting up MinIO for CNPG backups..."
+
+              # Get credentials from mounted secrets
+              MINIO_ROOT_USER=$(cat /minio-creds/rootUser)
+              MINIO_ROOT_PASSWORD=$(cat /minio-creds/rootPassword)
+              CNPG_ACCESS_KEY=$(cat /cnpg-creds/ACCESS_KEY_ID)
+              CNPG_SECRET_KEY=$(cat /cnpg-creds/SECRET_ACCESS_KEY)
+
+              # Configure mc alias
+              mc alias set myminio http://minio.minio.svc.cluster.local:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
+
+              # Create bucket (idempotent)
+              echo "Creating bucket cnpg-backups..."
+              mc mb myminio/cnpg-backups --ignore-existing
+
+              # Create user (ignore if exists)
+              echo "Creating user for CNPG..."
+              mc admin user add myminio "$CNPG_ACCESS_KEY" "$CNPG_SECRET_KEY" 2>/dev/null || echo "User already exists"
+
+              # Attach readwrite policy
+              echo "Attaching readwrite policy..."
+              mc admin policy attach myminio readwrite --user "$CNPG_ACCESS_KEY" 2>/dev/null || \
+                mc admin policy set myminio readwrite user="$CNPG_ACCESS_KEY" 2>/dev/null || \
+                echo "Policy already attached"
+
+              # Set bucket versioning (for recovery)
+              echo "Enabling bucket versioning..."
+              mc version enable myminio/cnpg-backups || echo "Versioning already enabled"
+
+              # Set lifecycle policy for old backups (cleanup after 30 days of non-current versions)
+              echo "Setting lifecycle policy..."
+              cat > /tmp/lifecycle.json << 'EOF'
+              {
+                "Rules": [
+                  {
+                    "ID": "cleanup-old-versions",
+                    "Status": "Enabled",
+                    "NoncurrentVersionExpiration": {
+                      "NoncurrentDays": 30
+                    }
+                  }
+                ]
+              }
+              EOF
+              mc ilm import myminio/cnpg-backups < /tmp/lifecycle.json || echo "Lifecycle policy already set"
+
+              echo "Verifying setup..."
+              mc ls myminio/
+              mc admin user info myminio "$CNPG_ACCESS_KEY" || echo "User info check"
+
+              echo "MinIO CNPG setup complete!"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          volumeMounts:
+            - name: minio-credentials
+              mountPath: /minio-creds
+              readOnly: true
+            - name: cnpg-credentials
+              mountPath: /cnpg-creds
+              readOnly: true
+      volumes:
+        - name: minio-credentials
+          secret:
+            secretName: minio-credentials
+        - name: cnpg-credentials
+          secret:
+            secretName: cnpg-minio-credentials

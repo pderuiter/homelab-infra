@@ -4,6 +4,3 @@ resources:
   - namespace.yaml
   - helmrepository.yaml
   - helmrelease.yaml
-  - storageclass-database.yaml
-  - externalsecret.yaml
-  - middleware.yaml

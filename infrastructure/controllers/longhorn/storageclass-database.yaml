@@ -1,0 +1,22 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: longhorn-database
+  labels:
+    app.kubernetes.io/name: longhorn
+    app.kubernetes.io/component: storageclass
+provisioner: driver.longhorn.io
+allowVolumeExpansion: true
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+parameters:
+  # Single replica - CNPG handles HA at database level
+  numberOfReplicas: "1"
+  staleReplicaTimeout: "30"
+  fromBackup: ""
+  fsType: "ext4"
+  # Prefer local storage for better performance
+  dataLocality: "best-effort"
+  disableRevisionCounter: "true"
+  dataEngine: "v1"
+  unmapMarkSnapChainRemoved: "ignored"

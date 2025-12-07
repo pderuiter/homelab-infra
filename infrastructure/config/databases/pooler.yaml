@@ -1,0 +1,163 @@
+---
+# PgBouncer connection pooler for read-write connections
+apiVersion: postgresql.cnpg.io/v1
+kind: Pooler
+metadata:
+  name: postgres-cluster-pooler-rw
+  namespace: databases
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/component: pooler
+spec:
+  # Reference to the cluster
+  cluster:
+    name: postgres-cluster
+
+  # Number of pooler instances
+  instances: 2
+
+  # Connection type - rw connects to primary only
+  type: rw
+
+  # PgBouncer configuration
+  pgbouncer:
+    # Pool mode
+    poolMode: transaction
+
+    # Connection limits
+    parameters:
+      default_pool_size: "20"
+      max_client_conn: "200"
+      min_pool_size: "5"
+      reserve_pool_size: "5"
+      reserve_pool_timeout: "5"
+      max_db_connections: "50"
+      max_user_connections: "50"
+
+      # Timeouts
+      query_timeout: "0"
+      query_wait_timeout: "120"
+      client_idle_timeout: "0"
+      client_login_timeout: "60"
+      server_connect_timeout: "15"
+      server_idle_timeout: "600"
+      server_lifetime: "3600"
+
+      # Logging
+      log_connections: "1"
+      log_disconnections: "1"
+      log_pooler_errors: "1"
+      stats_period: "60"
+      verbose: "0"
+
+  # Enable monitoring
+  monitoring:
+    enablePodMonitor: true
+
+  # Pod template
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: postgres
+        app.kubernetes.io/component: pooler
+    spec:
+      containers:
+        - name: pgbouncer
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: DoesNotExist
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    cnpg.io/poolerName: postgres-cluster-pooler-rw
+                topologyKey: kubernetes.io/hostname
+---
+# PgBouncer connection pooler for read-only connections (load balances across replicas)
+apiVersion: postgresql.cnpg.io/v1
+kind: Pooler
+metadata:
+  name: postgres-cluster-pooler-ro
+  namespace: databases
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/component: pooler
+spec:
+  cluster:
+    name: postgres-cluster
+
+  instances: 2
+
+  # ro type connects to replicas only
+  type: ro
+
+  pgbouncer:
+    poolMode: transaction
+
+    parameters:
+      default_pool_size: "25"
+      max_client_conn: "300"
+      min_pool_size: "5"
+      reserve_pool_size: "5"
+      reserve_pool_timeout: "5"
+      max_db_connections: "75"
+      max_user_connections: "75"
+      query_timeout: "0"
+      query_wait_timeout: "120"
+      client_idle_timeout: "0"
+      client_login_timeout: "60"
+      server_connect_timeout: "15"
+      server_idle_timeout: "600"
+      server_lifetime: "3600"
+      log_connections: "1"
+      log_disconnections: "1"
+      log_pooler_errors: "1"
+      stats_period: "60"
+      verbose: "0"
+
+  monitoring:
+    enablePodMonitor: true
+
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: postgres
+        app.kubernetes.io/component: pooler
+    spec:
+      containers:
+        - name: pgbouncer
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: DoesNotExist
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    cnpg.io/poolerName: postgres-cluster-pooler-ro
+                topologyKey: kubernetes.io/hostname
