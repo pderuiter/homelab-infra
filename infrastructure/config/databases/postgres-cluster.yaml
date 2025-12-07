@@ -25,11 +25,11 @@ spec:
   # PostgreSQL configuration
   postgresql:
     parameters:
-      # Memory settings (adjust based on your worker node resources)
-      shared_buffers: "256MB"
-      effective_cache_size: "768MB"
-      maintenance_work_mem: "64MB"
-      work_mem: "16MB"
+      # Memory settings (tuned for 1Gi limit)
+      shared_buffers: "128MB"
+      effective_cache_size: "384MB"
+      maintenance_work_mem: "32MB"
+      work_mem: "8MB"
 
       # WAL settings
       wal_buffers: "16MB"
@@ -122,14 +122,14 @@ spec:
         jobs: 2
     retentionPolicy: "14d"
 
-  # Resource limits
+  # Resource limits (reduced for homelab constraints)
   resources:
     requests:
-      cpu: 500m
-      memory: 1Gi
+      cpu: 200m
+      memory: 512Mi
     limits:
-      cpu: 2000m
-      memory: 2Gi
+      cpu: 1000m
+      memory: 1Gi
 
   # Pod affinity - spread across nodes
   affinity:
