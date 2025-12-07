@@ -67,6 +67,9 @@ spec:
   # Enable PodMonitor for Prometheus
   monitoring:
     enablePodMonitor: true
+    # Required label for Prometheus to discover this PodMonitor
+    podMonitorLabels:
+      release: kube-prometheus-stack
     podMonitorMetricRelabelings:
       - sourceLabels: [cluster]
         targetLabel: cnpg_cluster
