@@ -150,10 +150,11 @@ spec:
             summary: "Backup failed for {{ $labels.cluster }}"
             description: "The last backup for CloudNativePG cluster {{ $labels.cluster }} has failed."
 
-        # Backup too old
+        # Backup too old (only check primary - replicas report 0)
         - alert: CNPGBackupStale
           expr: |
-            time() - cnpg_collector_last_available_backup_timestamp{namespace="databases"} > 86400
+            (time() - max by (cluster, namespace) (cnpg_collector_last_available_backup_timestamp{namespace="databases"}) > 86400)
+            and max by (cluster, namespace) (cnpg_collector_last_available_backup_timestamp{namespace="databases"}) > 0
           for: 30m
           labels:
             severity: warning
@@ -185,16 +186,20 @@ spec:
             summary: "High query latency in {{ $labels.cluster }}"
             description: "Average query time in cluster {{ $labels.cluster }} is {{ $value | printf \"%.2f\" }} seconds."
 
-        # Cache hit ratio low
+        # Cache hit ratio low - use rate to measure recent behavior
+        # Threshold increased to 0.3 (30%) as some backend writes during bursts is normal
         - alert: CNPGLowCacheHitRatio
           expr: |
-            cnpg_pg_stat_bgwriter_buffers_backend / (cnpg_pg_stat_bgwriter_buffers_backend + cnpg_pg_stat_bgwriter_buffers_clean + cnpg_pg_stat_bgwriter_buffers_checkpoint) > 0.1
+            (
+              rate(cnpg_pg_stat_bgwriter_buffers_backend[10m]) /
+              (rate(cnpg_pg_stat_bgwriter_buffers_backend[10m]) + rate(cnpg_pg_stat_bgwriter_buffers_clean[10m]) + rate(cnpg_pg_stat_bgwriter_buffers_checkpoint[10m]) + 0.001)
+            ) > 0.3
           for: 30m
           labels:
             severity: warning
           annotations:
             summary: "Low buffer cache efficiency in {{ $labels.cluster }}"
-            description: "PostgreSQL cluster {{ $labels.cluster }} has a high rate of backend buffer writes, indicating potential memory pressure."
+            description: "PostgreSQL cluster {{ $labels.cluster }} has a high rate of backend buffer writes ({{ $value | printf \"%.1f\" }}%), indicating potential memory pressure."
 
         # Deadlocks detected
         - alert: CNPGDeadlocksDetected
