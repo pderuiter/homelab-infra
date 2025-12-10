@@ -948,6 +948,113 @@ kubectl get clustersecretstore vault-backend
 kubectl get secret postgres-superuser-credentials -n databases -o jsonpath='{.data}' | jq 'keys'
 ```
 
+### CNPGBackupStale Alert Firing on Replicas
+
+**Symptoms**: You receive `CNPGBackupStale` alerts for replica pods (postgres-cluster-2, postgres-cluster-3).
+
+**Cause**: Only the primary instance tracks backup timestamps. Replica instances report `cnpg_collector_last_available_backup_timestamp = 0`, which triggers the alert because `time() - 0` is always greater than 24 hours.
+
+**Solution**: The alert rule has been updated to use `max()` to only consider the primary's backup timestamp:
+```yaml
+expr: |
+  (time() - max by (cluster, namespace) (cnpg_collector_last_available_backup_timestamp{namespace="databases"}) > 86400)
+  and max by (cluster, namespace) (cnpg_collector_last_available_backup_timestamp{namespace="databases"}) > 0
+```
+
+**Verification**:
+```bash
+# Check backup timestamp per pod
+kubectl exec -n observability deploy/kube-prometheus-stack-prometheus -- \
+  wget -qO- 'http://localhost:9090/api/v1/query?query=cnpg_collector_last_available_backup_timestamp' | \
+  jq '.data.result[] | {pod: .metric.pod, timestamp: .value[1]}'
+# Primary should have a recent timestamp, replicas will show 0 (expected)
+
+# Verify actual backups exist
+kubectl get backups -n databases
+```
+
+### CNPGLowCacheHitRatio Alert
+
+**Symptoms**: Intermittent `CNPGLowCacheHitRatio` alerts indicating "high rate of backend buffer writes".
+
+**Cause**: The alert monitors the ratio of buffers written by backend processes vs. the background writer. A high ratio indicates backends are doing work that should be done by the background writer. This can happen during:
+- Bulk inserts/updates
+- Checkpoint operations
+- VACUUM operations
+- Normal traffic bursts in a lightly-used database
+
+**Diagnosis**:
+```bash
+# Check current buffer write statistics
+kubectl exec -n databases postgres-cluster-1 -- psql -U postgres -c "
+SELECT
+  buffers_backend as backend_writes,
+  buffers_clean as bgwriter_writes,
+  buffers_checkpoint as checkpoint_writes,
+  round(100.0 * buffers_backend / NULLIF(buffers_backend + buffers_clean + buffers_checkpoint, 0), 2) as backend_pct
+FROM pg_stat_bgwriter;"
+
+# Check current bgwriter settings
+kubectl exec -n databases postgres-cluster-1 -- psql -U postgres -c "
+SHOW bgwriter_delay; SHOW bgwriter_lru_maxpages; SHOW bgwriter_lru_multiplier;"
+```
+
+**Solution**: The bgwriter settings have been tuned to be more aggressive:
+| Setting | Default | Tuned |
+|---------|---------|-------|
+| bgwriter_delay | 200ms | 100ms |
+| bgwriter_lru_maxpages | 100 | 200 |
+| bgwriter_lru_multiplier | 2 | 4 |
+
+The alert threshold has also been increased from 10% to 30%, and now uses `rate()` to measure recent behavior rather than cumulative stats:
+```yaml
+expr: |
+  (
+    rate(cnpg_pg_stat_bgwriter_buffers_backend[10m]) /
+    (rate(cnpg_pg_stat_bgwriter_buffers_backend[10m]) + rate(cnpg_pg_stat_bgwriter_buffers_clean[10m]) + rate(cnpg_pg_stat_bgwriter_buffers_checkpoint[10m]) + 0.001)
+  ) > 0.3
+```
+
+### Maintenance Job Password Authentication Failed
+
+**Symptoms**: `postgres-vacuum-analyze` or `postgres-reindex` jobs fail with error:
+```
+FATAL: password authentication failed for user "postgres"
+```
+
+**Cause**: The password in the Kubernetes secret (synced from Vault) doesn't match the password stored in PostgreSQL.
+
+**Diagnosis**:
+```bash
+# Check password in Vault
+export VAULT_ADDR=https://192.168.2.170:8200
+export VAULT_SKIP_VERIFY=1
+vault kv get secret/kubernetes/postgres/superuser
+
+# Check password in Kubernetes secret
+kubectl get secret postgres-superuser-credentials -n databases \
+  -o jsonpath='{.data.password}' | base64 -d; echo
+
+# Test authentication from within PostgreSQL (using socket - always works)
+kubectl exec -n databases postgres-cluster-1 -- psql -U postgres -c "SELECT 1;"
+```
+
+**Solution**: Sync the PostgreSQL password to match Vault:
+```bash
+# Get password from Vault/secret
+PASSWORD=$(kubectl get secret postgres-superuser-credentials -n databases \
+  -o jsonpath='{.data.password}' | base64 -d)
+
+# Update PostgreSQL password to match
+kubectl exec -n databases postgres-cluster-1 -- \
+  psql -U postgres -c "ALTER USER postgres WITH PASSWORD '$PASSWORD';"
+
+# Test a maintenance job manually
+kubectl create job test-vacuum --from=cronjob/postgres-vacuum-analyze -n databases
+kubectl logs -n databases job/test-vacuum -f
+kubectl delete job test-vacuum -n databases
+```
+
 ## Connection Information
 
 ### Application Connection Strings
