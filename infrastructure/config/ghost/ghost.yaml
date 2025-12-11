@@ -1,0 +1,165 @@
+---
+# Ghost Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: ghost
+  namespace: ghost
+  labels:
+    app.kubernetes.io/name: ghost
+    app.kubernetes.io/component: blog
+spec:
+  type: ClusterIP
+  ports:
+    - port: 2368
+      targetPort: 2368
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: ghost
+    app.kubernetes.io/component: blog
+---
+# Ghost Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ghost
+  namespace: ghost
+  labels:
+    app.kubernetes.io/name: ghost
+    app.kubernetes.io/component: blog
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate  # Ghost doesn't support rolling updates well with persistent content
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ghost
+      app.kubernetes.io/component: blog
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ghost
+        app.kubernetes.io/component: blog
+    spec:
+      # Run only on worker nodes
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: DoesNotExist
+      # Wait for MySQL to be ready
+      initContainers:
+        - name: wait-for-mysql
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for MySQL to be ready..."
+              until nc -z mysql.ghost.svc.cluster.local 3306; do
+                echo "MySQL is not ready yet, waiting..."
+                sleep 5
+              done
+              echo "MySQL is ready!"
+      containers:
+        - name: ghost
+          image: ghost:5-alpine
+          ports:
+            - containerPort: 2368
+              name: http
+          env:
+            # URL configuration
+            - name: url
+              value: https://blog.bsdserver.nl
+            # Database configuration from ExternalSecret
+            - name: database__client
+              valueFrom:
+                secretKeyRef:
+                  name: ghost-database-url
+                  key: database__client
+            - name: database__connection__host
+              valueFrom:
+                secretKeyRef:
+                  name: ghost-database-url
+                  key: database__connection__host
+            - name: database__connection__port
+              valueFrom:
+                secretKeyRef:
+                  name: ghost-database-url
+                  key: database__connection__port
+            - name: database__connection__user
+              valueFrom:
+                secretKeyRef:
+                  name: ghost-database-url
+                  key: database__connection__user
+            - name: database__connection__password
+              valueFrom:
+                secretKeyRef:
+                  name: ghost-database-url
+                  key: database__connection__password
+            - name: database__connection__database
+              valueFrom:
+                secretKeyRef:
+                  name: ghost-database-url
+                  key: database__connection__database
+            # Mail configuration (disabled by default)
+            - name: mail__transport
+              value: "Direct"
+            # Privacy settings
+            - name: privacy__useUpdateCheck
+              value: "false"
+            - name: privacy__useGravatar
+              value: "false"
+            - name: privacy__useRpcPing
+              value: "false"
+            - name: privacy__useStructuredData
+              value: "true"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 512Mi
+          volumeMounts:
+            - name: ghost-content
+              mountPath: /var/lib/ghost/content
+          livenessProbe:
+            httpGet:
+              path: /ghost/api/admin/site/
+              port: 2368
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ghost/api/admin/site/
+              port: 2368
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+      volumes:
+        - name: ghost-content
+          persistentVolumeClaim:
+            claimName: ghost-content
+---
+# Ghost Content PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ghost-content
+  namespace: ghost
+  labels:
+    app.kubernetes.io/name: ghost
+    app.kubernetes.io/component: blog
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 10Gi

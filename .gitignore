@@ -2,3 +2,4 @@
 # These scripts are for local execution only and should not be committed
 scripts/
 PROGRESS.md
+ansible/inventory.ini

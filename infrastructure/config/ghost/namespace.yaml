@@ -1,0 +1,8 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ghost
+  labels:
+    app.kubernetes.io/name: ghost
+    app.kubernetes.io/component: blog
