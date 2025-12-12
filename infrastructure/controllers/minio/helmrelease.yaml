@@ -111,3 +111,14 @@ spec:
     # Environment variables
     environment:
       MINIO_BROWSER_REDIRECT_URL: "https://minio-console.bsdserver.nl"
+
+    # Prometheus metrics
+    metrics:
+      serviceMonitor:
+        enabled: true
+        includeNode: true
+        public: true
+        additionalLabels:
+          release: kube-prometheus-stack
+        interval: 30s
+        scrapeTimeout: 10s
