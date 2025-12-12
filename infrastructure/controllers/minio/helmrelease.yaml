@@ -119,6 +119,6 @@ spec:
         includeNode: true
         public: true
         additionalLabels:
-          release: kube-prometheus-stack
+          prometheus: kube-prometheus-stack
         interval: 30s
         scrapeTimeout: 10s
