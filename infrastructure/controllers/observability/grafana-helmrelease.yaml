@@ -67,6 +67,7 @@ spec:
         apiVersion: 1
         datasources:
           - name: Prometheus
+            uid: prometheus
             type: prometheus
             url: http://kube-prometheus-stack-prometheus.observability.svc:9090
             access: proxy
