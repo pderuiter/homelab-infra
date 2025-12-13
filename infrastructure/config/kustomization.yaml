@@ -7,3 +7,4 @@ resources:
   - external-dns
   - databases
   - ghost
+  - homelab-dashboard

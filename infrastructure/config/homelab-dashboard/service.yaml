@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: homelab-dashboard
+  namespace: homelab-dashboard
+  labels:
+    app: homelab-dashboard
+spec:
+  type: ClusterIP
+  selector:
+    app: homelab-dashboard
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP

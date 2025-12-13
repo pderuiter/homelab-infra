@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homelab Kubernetes Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #fff;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            padding: 3rem 0;
+        }
+
+        header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, #00d4ff, #7b2cbf, #e040fb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            font-size: 1.2rem;
+            color: #a0aec0;
+        }
+
+        .cluster-info {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .cluster-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.9rem;
+        }
+
+        .cluster-badge .dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 3rem 0;
+        }
+
+        .metric-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-color), transparent);
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .metric-card.cpu { --accent-color: #00d4ff; }
+        .metric-card.memory { --accent-color: #7b2cbf; }
+        .metric-card.pods { --accent-color: #10b981; }
+        .metric-card.nodes { --accent-color: #f59e0b; }
+        .metric-card.storage { --accent-color: #ef4444; }
+        .metric-card.ingress { --accent-color: #e040fb; }
+
+        .metric-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-label {
+            color: #a0aec0;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .metric-detail {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.85rem;
+            color: #718096;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 3rem 0 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.2), transparent);
+        }
+
+        .apps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .app-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .app-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .app-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .app-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+        }
+
+        .app-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .app-url {
+            font-size: 0.8rem;
+            color: #00d4ff;
+        }
+
+        .app-description {
+            color: #a0aec0;
+            font-size: 0.9rem;
+        }
+
+        .app-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            padding: 0.25rem 0.75rem;
+            background: rgba(16, 185, 129, 0.2);
+            border-radius: 1rem;
+            font-size: 0.8rem;
+            color: #10b981;
+        }
+
+        .app-status .dot {
+            width: 6px;
+            height: 6px;
+            background: #10b981;
+            border-radius: 50%;
+        }
+
+        .architecture-section {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .arch-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .arch-item {
+            text-align: center;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 0.75rem;
+        }
+
+        .arch-item h4 {
+            color: #00d4ff;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .arch-item p {
+            color: #e2e8f0;
+            font-weight: 500;
+        }
+
+        .nodes-section {
+            margin: 2rem 0;
+        }
+
+        .nodes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+        }
+
+        .node-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .node-card.master {
+            border-left: 3px solid #f59e0b;
+        }
+
+        .node-card.worker {
+            border-left: 3px solid #10b981;
+        }
+
+        .node-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .node-role {
+            font-size: 0.75rem;
+            color: #718096;
+            text-transform: uppercase;
+        }
+
+        .node-ip {
+            font-size: 0.8rem;
+            color: #a0aec0;
+            margin-top: 0.5rem;
+        }
+
+        footer {
+            text-align: center;
+            padding: 3rem 0;
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
+        footer a {
+            color: #00d4ff;
+            text-decoration: none;
+        }
+
+        .loading {
+            opacity: 0.5;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2rem;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .metric-value {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Homelab Kubernetes</h1>
+            <p>Production-grade bare-metal Kubernetes cluster</p>
+            <div class="cluster-info">
+                <div class="cluster-badge">
+                    <span class="dot"></span>
+                    <span>Cluster Online</span>
+                </div>
+                <div class="cluster-badge">
+                    <span>Kubernetes v1.32</span>
+                </div>
+                <div class="cluster-badge">
+                    <span>GitOps with Flux</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="metrics-grid">
+            <div class="metric-card cpu">
+                <div class="metric-icon">&#x1F4BB;</div>
+                <div class="metric-value" id="cpu-usage">--</div>
+                <div class="metric-label">CPU Usage</div>
+                <div class="metric-detail">Across all nodes</div>
+            </div>
+            <div class="metric-card memory">
+                <div class="metric-icon">&#x1F9E0;</div>
+                <div class="metric-value" id="memory-usage">--</div>
+                <div class="metric-label">Memory Usage</div>
+                <div class="metric-detail" id="memory-detail">-- / -- GB</div>
+            </div>
+            <div class="metric-card pods">
+                <div class="metric-icon">&#x1F4E6;</div>
+                <div class="metric-value" id="pod-count">--</div>
+                <div class="metric-label">Running Pods</div>
+                <div class="metric-detail" id="pod-detail">Across all namespaces</div>
+            </div>
+            <div class="metric-card nodes">
+                <div class="metric-icon">&#x1F5A5;</div>
+                <div class="metric-value" id="node-count">6</div>
+                <div class="metric-label">Cluster Nodes</div>
+                <div class="metric-detail">3 masters + 3 workers</div>
+            </div>
+            <div class="metric-card storage">
+                <div class="metric-icon">&#x1F4BE;</div>
+                <div class="metric-value" id="storage-usage">--</div>
+                <div class="metric-label">Storage Used</div>
+                <div class="metric-detail" id="storage-detail">Longhorn distributed storage</div>
+            </div>
+            <div class="metric-card ingress">
+                <div class="metric-icon">&#x1F310;</div>
+                <div class="metric-value" id="ingress-count">--</div>
+                <div class="metric-label">Ingress Routes</div>
+                <div class="metric-detail">Traefik ingress controller</div>
+            </div>
+        </div>
+
+        <h2 class="section-title">&#x1F680; Deployed Applications</h2>
+        <div class="apps-grid">
+            <a href="https://grafana.bsdserver.nl" target="_blank" class="app-card">
+                <div class="app-header">
+                    <div class="app-icon">&#x1F4CA;</div>
+                    <div>
+                        <div class="app-name">Grafana</div>
+                        <div class="app-url">grafana.bsdserver.nl</div>
+                    </div>
+                </div>
+                <div class="app-description">Observability dashboards for metrics visualization and alerting</div>
+                <div class="app-status"><span class="dot"></span> Healthy</div>
+            </a>
+            <a href="https://prometheus.bsdserver.nl" target="_blank" class="app-card">
+                <div class="app-header">
+                    <div class="app-icon">&#x1F525;</div>
+                    <div>
+                        <div class="app-name">Prometheus</div>
+                        <div class="app-url">prometheus.bsdserver.nl</div>
+                    </div>
+                </div>
+                <div class="app-description">Metrics collection and time-series database</div>
+                <div class="app-status"><span class="dot"></span> Healthy</div>
+            </a>
+            <a href="https://blog.bsdserver.nl" target="_blank" class="app-card">
+                <div class="app-header">
+                    <div class="app-icon">&#x1F4DD;</div>
+                    <div>
+                        <div class="app-name">Ghost Blog</div>
+                        <div class="app-url">blog.bsdserver.nl</div>
+                    </div>
+                </div>
+                <div class="app-description">Technical blog powered by Ghost CMS with MySQL backend</div>
+                <div class="app-status"><span class="dot"></span> Healthy</div>
+            </a>
+            <a href="https://minio-console.bsdserver.nl" target="_blank" class="app-card">
+                <div class="app-header">
+                    <div class="app-icon">&#x1F4E6;</div>
+                    <div>
+                        <div class="app-name">MinIO</div>
+                        <div class="app-url">minio-console.bsdserver.nl</div>
+                    </div>
+                </div>
+                <div class="app-description">S3-compatible object storage in distributed mode (4 nodes)</div>
+                <div class="app-status"><span class="dot"></span> Healthy</div>
+            </a>
+            <a href="https://longhorn.bsdserver.nl" target="_blank" class="app-card">
+                <div class="app-header">
+                    <div class="app-icon">&#x1F4BE;</div>
+                    <div>
+                        <div class="app-name">Longhorn</div>
+                        <div class="app-url">longhorn.bsdserver.nl</div>
+                    </div>
+                </div>
+                <div class="app-description">Cloud-native distributed block storage for Kubernetes</div>
+                <div class="app-status"><span class="dot"></span> Healthy</div>
+            </a>
+            <a href="https://alertmanager.bsdserver.nl" target="_blank" class="app-card">
+                <div class="app-header">
+                    <div class="app-icon">&#x1F514;</div>
+                    <div>
+                        <div class="app-name">Alertmanager</div>
+                        <div class="app-url">alertmanager.bsdserver.nl</div>
+                    </div>
+                </div>
+                <div class="app-description">Alert handling and notification routing for Prometheus</div>
+                <div class="app-status"><span class="dot"></span> Healthy</div>
+            </a>
+            <a href="https://ntfy.bsdserver.nl" target="_blank" class="app-card">
+                <div class="app-header">
+                    <div class="app-icon">&#x1F4F1;</div>
+                    <div>
+                        <div class="app-name">ntfy</div>
+                        <div class="app-url">ntfy.bsdserver.nl</div>
+                    </div>
+                </div>
+                <div class="app-description">Simple HTTP-based pub-sub notification service</div>
+                <div class="app-status"><span class="dot"></span> Healthy</div>
+            </a>
+            <a href="https://search.bsdserver.nl" target="_blank" class="app-card">
+                <div class="app-header">
+                    <div class="app-icon">&#x1F50D;</div>
+                    <div>
+                        <div class="app-name">SearXNG</div>
+                        <div class="app-url">search.bsdserver.nl</div>
+                    </div>
+                </div>
+                <div class="app-description">Privacy-respecting metasearch engine</div>
+                <div class="app-status"><span class="dot"></span> Healthy</div>
+            </a>
+        </div>
+
+        <h2 class="section-title">&#x1F3D7; Cluster Architecture</h2>
+        <div class="architecture-section">
+            <div class="arch-grid">
+                <div class="arch-item">
+                    <h4>Container Runtime</h4>
+                    <p>containerd</p>
+                </div>
+                <div class="arch-item">
+                    <h4>CNI</h4>
+                    <p>Calico</p>
+                </div>
+                <div class="arch-item">
+                    <h4>Load Balancer</h4>
+                    <p>MetalLB</p>
+                </div>
+                <div class="arch-item">
+                    <h4>Ingress</h4>
+                    <p>Traefik</p>
+                </div>
+                <div class="arch-item">
+                    <h4>Storage</h4>
+                    <p>Longhorn</p>
+                </div>
+                <div class="arch-item">
+                    <h4>Secrets</h4>
+                    <p>External Secrets + Vault</p>
+                </div>
+                <div class="arch-item">
+                    <h4>Certificates</h4>
+                    <p>cert-manager + Let's Encrypt</p>
+                </div>
+                <div class="arch-item">
+                    <h4>GitOps</h4>
+                    <p>Flux CD</p>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="section-title">&#x1F5A5; Cluster Nodes</h2>
+        <div class="nodes-section">
+            <div class="nodes-grid">
+                <div class="node-card master">
+                    <div class="node-name">wbyc-k8s-master01</div>
+                    <div class="node-role">Control Plane</div>
+                    <div class="node-ip">192.168.2.150</div>
+                </div>
+                <div class="node-card master">
+                    <div class="node-name">wbyc-k8s-master02</div>
+                    <div class="node-role">Control Plane</div>
+                    <div class="node-ip">192.168.2.151</div>
+                </div>
+                <div class="node-card master">
+                    <div class="node-name">wbyc-k8s-master03</div>
+                    <div class="node-role">Control Plane</div>
+                    <div class="node-ip">192.168.2.152</div>
+                </div>
+                <div class="node-card worker">
+                    <div class="node-name">wbyc-k8s-worker01</div>
+                    <div class="node-role">Worker</div>
+                    <div class="node-ip">192.168.2.153</div>
+                </div>
+                <div class="node-card worker">
+                    <div class="node-name">wbyc-k8s-worker02</div>
+                    <div class="node-role">Worker</div>
+                    <div class="node-ip">192.168.2.154</div>
+                </div>
+                <div class="node-card worker">
+                    <div class="node-name">wbyc-k8s-worker03</div>
+                    <div class="node-role">Worker</div>
+                    <div class="node-ip">192.168.2.155</div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Built with Kubernetes, managed by Flux CD</p>
+            <p>Metrics refreshed every 30 seconds</p>
+        </footer>
+    </div>
+
+    <script>
+        const PROMETHEUS_URL = '/api/prometheus';
+
+        async function queryPrometheus(query) {
+            try {
+                const response = await fetch(`${PROMETHEUS_URL}/api/v1/query?query=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                if (data.status === 'success' && data.data.result.length > 0) {
+                    return data.data.result;
+                }
+                return null;
+            } catch (error) {
+                console.error('Prometheus query failed:', error);
+                return null;
+            }
+        }
+
+        async function updateMetrics() {
+            // CPU Usage (average across nodes)
+            const cpuResult = await queryPrometheus('100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)');
+            if (cpuResult) {
+                const cpuValue = parseFloat(cpuResult[0].value[1]).toFixed(1);
+                document.getElementById('cpu-usage').textContent = cpuValue + '%';
+            }
+
+            // Memory Usage
+            const memUsedResult = await queryPrometheus('sum(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes)');
+            const memTotalResult = await queryPrometheus('sum(node_memory_MemTotal_bytes)');
+            if (memUsedResult && memTotalResult) {
+                const memUsed = parseFloat(memUsedResult[0].value[1]);
+                const memTotal = parseFloat(memTotalResult[0].value[1]);
+                const memPercent = ((memUsed / memTotal) * 100).toFixed(1);
+                const memUsedGB = (memUsed / 1024 / 1024 / 1024).toFixed(1);
+                const memTotalGB = (memTotal / 1024 / 1024 / 1024).toFixed(0);
+                document.getElementById('memory-usage').textContent = memPercent + '%';
+                document.getElementById('memory-detail').textContent = `${memUsedGB} / ${memTotalGB} GB`;
+            }
+
+            // Pod Count
+            const podResult = await queryPrometheus('sum(kubelet_running_pods)');
+            if (podResult) {
+                document.getElementById('pod-count').textContent = Math.round(parseFloat(podResult[0].value[1]));
+            }
+
+            // Ingress Count (count of ingress rules)
+            const ingressResult = await queryPrometheus('count(traefik_router_requests_total)');
+            if (ingressResult) {
+                document.getElementById('ingress-count').textContent = Math.round(parseFloat(ingressResult[0].value[1]));
+            } else {
+                // Fallback: try counting services
+                const svcResult = await queryPrometheus('count(kube_service_info)');
+                if (svcResult) {
+                    document.getElementById('ingress-count').textContent = Math.round(parseFloat(svcResult[0].value[1]));
+                }
+            }
+
+            // Storage Usage (Longhorn)
+            const storageUsedResult = await queryPrometheus('sum(longhorn_volume_actual_size_bytes)');
+            const storageTotalResult = await queryPrometheus('sum(longhorn_node_storage_capacity_bytes)');
+            if (storageUsedResult && storageTotalResult) {
+                const storageUsed = parseFloat(storageUsedResult[0].value[1]);
+                const storageTotal = parseFloat(storageTotalResult[0].value[1]);
+                const storageUsedGB = (storageUsed / 1024 / 1024 / 1024).toFixed(0);
+                const storageTotalGB = (storageTotal / 1024 / 1024 / 1024).toFixed(0);
+                document.getElementById('storage-usage').textContent = storageUsedGB + ' GB';
+                document.getElementById('storage-detail').textContent = `${storageUsedGB} / ${storageTotalGB} GB used`;
+            }
+        }
+
+        // Initial load
+        updateMetrics();
+
+        // Refresh every 30 seconds
+        setInterval(updateMetrics, 30000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: homelab-dashboard
+  namespace: homelab-dashboard
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - homelab.bsdserver.nl
+      secretName: homelab-dashboard-tls
+  rules:
+    - host: homelab.bsdserver.nl
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: homelab-dashboard
+                port:
+                  number: 80
