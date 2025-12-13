@@ -311,6 +311,92 @@
             margin-top: 0.5rem;
         }
 
+        .links-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .link-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .link-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .link-card.github:hover {
+            border-color: #6e5494;
+            box-shadow: 0 20px 40px rgba(110, 84, 148, 0.2);
+        }
+
+        .link-card.linkedin:hover {
+            border-color: #0077b5;
+            box-shadow: 0 20px 40px rgba(0, 119, 181, 0.2);
+        }
+
+        .link-card.blog:hover {
+            border-color: #00d4ff;
+            box-shadow: 0 20px 40px rgba(0, 212, 255, 0.2);
+        }
+
+        .link-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            flex-shrink: 0;
+        }
+
+        .link-card.github .link-icon {
+            background: linear-gradient(135deg, #6e5494, #4c3575);
+        }
+
+        .link-card.linkedin .link-icon {
+            background: linear-gradient(135deg, #0077b5, #005582);
+        }
+
+        .link-card.blog .link-icon {
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+        }
+
+        .link-content {
+            flex: 1;
+        }
+
+        .link-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .link-description {
+            color: #a0aec0;
+            font-size: 0.85rem;
+        }
+
+        .link-url {
+            color: #00d4ff;
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+        }
+
         footer {
             text-align: center;
             padding: 3rem 0;
@@ -562,6 +648,34 @@
                     <div class="node-role">Worker</div>
                 </div>
             </div>
+        </div>
+
+        <h2 class="section-title">&#x1F517; Connect</h2>
+        <div class="links-grid">
+            <a href="https://github.com/pderuiter/homelab-infra" target="_blank" rel="noopener noreferrer" class="link-card github">
+                <div class="link-icon">&#x1F4BB;</div>
+                <div class="link-content">
+                    <div class="link-title">GitHub Repository</div>
+                    <div class="link-description">Source code for this Kubernetes platform</div>
+                    <div class="link-url">github.com/pderuiter/homelab-infra</div>
+                </div>
+            </a>
+            <a href="https://www.linkedin.com/in/patrickderuiter/" target="_blank" rel="noopener noreferrer" class="link-card linkedin">
+                <div class="link-icon">&#x1F464;</div>
+                <div class="link-content">
+                    <div class="link-title">LinkedIn Profile</div>
+                    <div class="link-description">Connect with me professionally</div>
+                    <div class="link-url">linkedin.com/in/patrickderuiter</div>
+                </div>
+            </a>
+            <a href="https://blog.bsdserver.nl" target="_blank" rel="noopener noreferrer" class="link-card blog">
+                <div class="link-icon">&#x1F4DD;</div>
+                <div class="link-content">
+                    <div class="link-title">Technical Blog</div>
+                    <div class="link-description">Articles on DevOps, Kubernetes, and infrastructure</div>
+                    <div class="link-url">blog.bsdserver.nl</div>
+                </div>
+            </a>
         </div>
 
         <footer>
