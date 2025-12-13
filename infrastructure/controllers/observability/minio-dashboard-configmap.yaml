@@ -10,67 +10,6 @@ metadata:
 data:
   minio-dashboard.json: |
     {
-      "__elements": {},
-      "__inputs": [
-        {
-          "description": "",
-          "label": "Prometheus",
-          "name": "DS_PROMETHEUS",
-          "pluginId": "prometheus",
-          "pluginName": "Prometheus",
-          "type": "datasource"
-        }
-      ],
-      "__requires": [
-        {
-          "id": "bargauge",
-          "name": "Bar gauge",
-          "type": "panel",
-          "version": ""
-        },
-        {
-          "id": "gauge",
-          "name": "Gauge",
-          "type": "panel",
-          "version": ""
-        },
-        {
-          "id": "grafana",
-          "name": "Grafana",
-          "type": "grafana",
-          "version": "10.3.1"
-        },
-        {
-          "id": "graph",
-          "name": "Graph (old)",
-          "type": "panel",
-          "version": ""
-        },
-        {
-          "id": "piechart",
-          "name": "Pie chart",
-          "type": "panel",
-          "version": ""
-        },
-        {
-          "id": "prometheus",
-          "name": "Prometheus",
-          "type": "datasource",
-          "version": "1.0.0"
-        },
-        {
-          "id": "stat",
-          "name": "Stat",
-          "type": "panel",
-          "version": ""
-        },
-        {
-          "id": "timeseries",
-          "name": "Time series",
-          "type": "panel",
-          "version": ""
-        }
-      ],
       "annotations": {
         "list": [
           {
