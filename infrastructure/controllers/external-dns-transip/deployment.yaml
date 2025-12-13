@@ -57,6 +57,10 @@ spec:
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"
           effect: "NoSchedule"
+      volumes:
+        - name: transip-credentials
+          secret:
+            secretName: transip-credentials
       containers:
         - name: external-dns
           image: registry.k8s.io/external-dns/external-dns:v0.15.1
@@ -65,10 +69,12 @@ spec:
             - --source=traefik-proxy
             - --traefik-disable-legacy
             - --provider=transip
+            - --transip-account=$(TRANSIP_ACCOUNT_NAME)
+            - --transip-keyfile=/etc/transip/private-key
             - --domain-filter=bsdserver.nl
             # Only process ingresses with the 'external' annotation
             - --annotation-filter=external-dns.alpha.kubernetes.io/external in (true)
-            # Create CNAME records pointing to the Pangolin VPS
+            # Create A records pointing to the Pangolin VPS
             - --txt-owner-id=external-dns-transip
             - --txt-prefix=_externaldns-transip.
             - --policy=sync
@@ -80,11 +86,10 @@ spec:
                 secretKeyRef:
                   name: transip-credentials
                   key: TRANSIP_ACCOUNT_NAME
-            - name: TRANSIP_PRIVATE_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: transip-credentials
-                  key: TRANSIP_PRIVATE_KEY
+          volumeMounts:
+            - name: transip-credentials
+              mountPath: /etc/transip
+              readOnly: true
           resources:
             requests:
               cpu: 10m
