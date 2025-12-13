@@ -1,0 +1,94 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: external-dns-transip
+  namespace: external-dns-transip
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: external-dns-transip
+rules:
+  - apiGroups: [""]
+    resources: ["services", "endpoints", "pods"]
+    verbs: ["get", "watch", "list"]
+  - apiGroups: ["extensions", "networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["get", "watch", "list"]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["list", "watch"]
+  - apiGroups: ["traefik.io", "traefik.containo.us"]
+    resources: ["ingressroutes", "ingressroutetcps", "ingressrouteudps"]
+    verbs: ["get", "watch", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: external-dns-transip-viewer
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: external-dns-transip
+subjects:
+  - kind: ServiceAccount
+    name: external-dns-transip
+    namespace: external-dns-transip
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: external-dns-transip
+  namespace: external-dns-transip
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: external-dns-transip
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: external-dns-transip
+    spec:
+      serviceAccountName: external-dns-transip
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+      containers:
+        - name: external-dns
+          image: registry.k8s.io/external-dns/external-dns:v0.15.1
+          args:
+            - --source=ingress
+            - --source=traefik-proxy
+            - --traefik-disable-legacy
+            - --provider=transip
+            - --domain-filter=bsdserver.nl
+            # Only process ingresses with the 'external' annotation
+            - --annotation-filter=external-dns.alpha.kubernetes.io/external in (true)
+            # Create CNAME records pointing to the Pangolin VPS
+            - --txt-owner-id=external-dns-transip
+            - --txt-prefix=_externaldns-transip.
+            - --policy=sync
+            - --registry=txt
+            - --log-level=info
+          env:
+            - name: TRANSIP_ACCOUNT_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: transip-credentials
+                  key: TRANSIP_ACCOUNT_NAME
+            - name: TRANSIP_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: transip-credentials
+                  key: TRANSIP_PRIVATE_KEY
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi

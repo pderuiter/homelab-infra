@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: external-dns-transip
+  labels:
+    app.kubernetes.io/name: external-dns-transip
+    app.kubernetes.io/component: dns

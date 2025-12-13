@@ -9,6 +9,7 @@ resources:
   - traefik
   - cert-manager
   - external-dns
+  - external-dns-transip
   - longhorn
   - cloudnative-pg
   - minio
