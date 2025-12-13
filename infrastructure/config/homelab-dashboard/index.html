@@ -178,10 +178,8 @@
             display: block;
         }
 
-        .app-card:hover {
-            transform: translateY(-3px);
-            border-color: rgba(255, 255, 255, 0.2);
-            background: rgba(255, 255, 255, 0.08);
+        .app-card {
+            cursor: default;
         }
 
         .app-header {
@@ -404,7 +402,7 @@
 
         <h2 class="section-title">&#x1F680; Deployed Applications</h2>
         <div class="apps-grid">
-            <a href="https://grafana.bsdserver.nl" target="_blank" class="app-card">
+            <div class="app-card">
                 <div class="app-header">
                     <div class="app-icon">&#x1F4CA;</div>
                     <div>
@@ -413,8 +411,8 @@
                 </div>
                 <div class="app-description">Observability dashboards for metrics visualization and alerting</div>
                 <div class="app-status"><span class="dot"></span> Healthy</div>
-            </a>
-            <a href="https://prometheus.bsdserver.nl" target="_blank" class="app-card">
+            </div>
+            <div class="app-card">
                 <div class="app-header">
                     <div class="app-icon">&#x1F525;</div>
                     <div>
@@ -423,8 +421,8 @@
                 </div>
                 <div class="app-description">Metrics collection and time-series database</div>
                 <div class="app-status"><span class="dot"></span> Healthy</div>
-            </a>
-            <a href="https://blog.bsdserver.nl" target="_blank" class="app-card">
+            </div>
+            <div class="app-card">
                 <div class="app-header">
                     <div class="app-icon">&#x1F4DD;</div>
                     <div>
@@ -433,8 +431,8 @@
                 </div>
                 <div class="app-description">Technical blog powered by Ghost CMS with MySQL backend</div>
                 <div class="app-status"><span class="dot"></span> Healthy</div>
-            </a>
-            <a href="https://minio-console.bsdserver.nl" target="_blank" class="app-card">
+            </div>
+            <div class="app-card">
                 <div class="app-header">
                     <div class="app-icon">&#x1F4E6;</div>
                     <div>
@@ -443,8 +441,8 @@
                 </div>
                 <div class="app-description">S3-compatible object storage in distributed mode (4 nodes)</div>
                 <div class="app-status"><span class="dot"></span> Healthy</div>
-            </a>
-            <a href="https://longhorn.bsdserver.nl" target="_blank" class="app-card">
+            </div>
+            <div class="app-card">
                 <div class="app-header">
                     <div class="app-icon">&#x1F4BE;</div>
                     <div>
@@ -453,8 +451,8 @@
                 </div>
                 <div class="app-description">Cloud-native distributed block storage for Kubernetes</div>
                 <div class="app-status"><span class="dot"></span> Healthy</div>
-            </a>
-            <a href="https://alertmanager.bsdserver.nl" target="_blank" class="app-card">
+            </div>
+            <div class="app-card">
                 <div class="app-header">
                     <div class="app-icon">&#x1F514;</div>
                     <div>
@@ -463,8 +461,8 @@
                 </div>
                 <div class="app-description">Alert handling and notification routing for Prometheus</div>
                 <div class="app-status"><span class="dot"></span> Healthy</div>
-            </a>
-            <a href="https://ntfy.bsdserver.nl" target="_blank" class="app-card">
+            </div>
+            <div class="app-card">
                 <div class="app-header">
                     <div class="app-icon">&#x1F4F1;</div>
                     <div>
@@ -473,8 +471,8 @@
                 </div>
                 <div class="app-description">Simple HTTP-based pub-sub notification service</div>
                 <div class="app-status"><span class="dot"></span> Healthy</div>
-            </a>
-            <a href="https://search.bsdserver.nl" target="_blank" class="app-card">
+            </div>
+            <div class="app-card">
                 <div class="app-header">
                     <div class="app-icon">&#x1F50D;</div>
                     <div>
@@ -483,7 +481,7 @@
                 </div>
                 <div class="app-description">Privacy-respecting metasearch engine</div>
                 <div class="app-status"><span class="dot"></span> Healthy</div>
-            </a>
+            </div>
         </div>
 
         <h2 class="section-title">&#x1F3D7; Cluster Architecture</h2>
