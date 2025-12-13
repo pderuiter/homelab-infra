@@ -148,10 +148,6 @@ spec:
           gnetId: 17346
           revision: 9
           datasource: Prometheus
-        minio:
-          gnetId: 13502
-          revision: 26
-          datasource: Prometheus
         loki-logs:
           gnetId: 13639
           revision: 2
