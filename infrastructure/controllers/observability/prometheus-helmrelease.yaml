@@ -56,9 +56,9 @@ spec:
             cpu: 1000m
             memory: 2Gi
 
-        # Additional scrape configs for Traefik, MinIO, vSphere
+        # Additional scrape configs for Traefik, MinIO, Pangolin
         additionalScrapeConfigs:
-          # Traefik metrics
+          # Traefik metrics (internal)
           - job_name: 'traefik'
             static_configs:
               - targets: ['traefik-metrics.traefik.svc:9100']
@@ -69,6 +69,14 @@ spec:
             scheme: http
             static_configs:
               - targets: ['minio.minio.svc:9000']
+
+          # Pangolin VPS Traefik metrics (external tunnel gateway)
+          - job_name: 'pangolin-traefik'
+            static_configs:
+              - targets: ['5.75.184.243:8082']
+                labels:
+                  instance: 'pangolin-vps'
+                  environment: 'external'
 
         # Pod affinity - schedule on workers
         affinity:
