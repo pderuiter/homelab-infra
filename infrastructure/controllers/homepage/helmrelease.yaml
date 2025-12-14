@@ -1,0 +1,82 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: homepage
+  namespace: homepage
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: homepage
+      version: "1.x"
+      sourceRef:
+        kind: HelmRepository
+        name: jameswynn
+        namespace: homepage
+      interval: 12h
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    image:
+      repository: ghcr.io/gethomepage/homepage
+      tag: latest
+
+    # Enable Kubernetes integration
+    enableRbac: true
+
+    serviceAccount:
+      create: true
+      name: homepage
+
+    # Ingress
+    ingress:
+      main:
+        enabled: true
+        ingressClassName: traefik
+        annotations:
+          cert-manager.io/cluster-issuer: letsencrypt-production
+        hosts:
+          - host: homepage.bsdserver.nl
+            paths:
+              - path: /
+                pathType: Prefix
+        tls:
+          - secretName: homepage-tls
+            hosts:
+              - homepage.bsdserver.nl
+
+    # Use ConfigMaps for configuration
+    config:
+      useExistingConfigMap: true
+      configMapName: homepage-settings
+
+    # Mount services ConfigMap
+    persistence:
+      services-config:
+        enabled: true
+        type: configMap
+        name: homepage-services
+        mountPath: /app/config/services.yaml
+        subPath: services.yaml
+
+    # Resources
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+
+    # Schedule on workers
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: node-role.kubernetes.io/control-plane
+                  operator: DoesNotExist

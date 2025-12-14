@@ -1,0 +1,79 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homepage-settings
+  namespace: homepage
+  labels:
+    app.kubernetes.io/name: homepage
+data:
+  settings.yaml: |
+    title: Homelab Dashboard
+    favicon: https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/png/heimdall.png
+    theme: dark
+    color: slate
+    headerStyle: clean
+    layout:
+      Kubernetes:
+        style: row
+        columns: 4
+      Infrastructure:
+        style: row
+        columns: 4
+      Applications:
+        style: row
+        columns: 3
+      External:
+        style: row
+        columns: 3
+      Monitoring:
+        style: row
+        columns: 4
+
+  bookmarks.yaml: |
+    - Developer:
+        - GitHub:
+            - abbr: GH
+              href: https://github.com/pderuiter
+              icon: si-github
+        - Gitea:
+            - abbr: GT
+              href: https://gitea.bsdserver.nl
+              icon: gitea.png
+
+    - Documentation:
+        - Kubernetes Docs:
+            - abbr: K8s
+              href: https://kubernetes.io/docs/
+              icon: kubernetes.png
+        - Flux Docs:
+            - abbr: FX
+              href: https://fluxcd.io/docs/
+              icon: flux-cd.png
+
+  widgets.yaml: |
+    - kubernetes:
+        cluster:
+          show: true
+          cpu: true
+          memory: true
+          showLabel: true
+          label: "Homelab Cluster"
+        nodes:
+          show: true
+          cpu: true
+          memory: true
+          showLabel: true
+
+    - search:
+        provider: google
+        target: _blank
+
+    - datetime:
+        text_size: xl
+        format:
+          dateStyle: long
+          timeStyle: short
+          hour12: false
+
+  kubernetes.yaml: |
+    mode: cluster
