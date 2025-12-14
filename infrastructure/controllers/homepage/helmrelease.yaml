@@ -67,15 +67,69 @@ spec:
                   href: https://gitea.bsdserver.nl
                   icon: gitea.png
 
-        - Documentation:
-            - Kubernetes Docs:
+        - Kubernetes Docs:
+            - Kubernetes:
                 - abbr: K8s
                   href: https://kubernetes.io/docs/
                   icon: kubernetes.png
-            - Flux Docs:
+            - Flux:
                 - abbr: FX
                   href: https://fluxcd.io/docs/
                   icon: flux-cd.png
+            - Longhorn:
+                - abbr: LH
+                  href: https://longhorn.io/docs/
+                  icon: longhorn.png
+            - CloudNativePG:
+                - abbr: PG
+                  href: https://cloudnative-pg.io/documentation/
+                  icon: postgresql.png
+
+        - HashiCorp Docs:
+            - Terraform:
+                - abbr: TF
+                  href: https://developer.hashicorp.com/terraform/docs
+                  icon: terraform.png
+            - Vault:
+                - abbr: VT
+                  href: https://developer.hashicorp.com/vault/docs
+                  icon: vault.png
+            - Consul:
+                - abbr: CS
+                  href: https://developer.hashicorp.com/consul/docs
+                  icon: consul.png
+            - Packer:
+                - abbr: PK
+                  href: https://developer.hashicorp.com/packer/docs
+                  icon: packer.png
+
+        - Ansible Docs:
+            - Ansible:
+                - abbr: AN
+                  href: https://docs.ansible.com/ansible/latest/
+                  icon: ansible.png
+            - Execution Environments:
+                - abbr: EE
+                  href: https://ansible.readthedocs.io/en/latest/getting_started_ee/
+                  icon: ansible.png
+            - Event-Driven Ansible:
+                - abbr: EDA
+                  href: https://ansible.readthedocs.io/projects/rulebook/
+                  icon: ansible.png
+
+        - Network & Storage Docs:
+            - Traefik:
+                - abbr: TK
+                  href: https://doc.traefik.io/traefik/
+                  icon: traefik.png
+            - HAProxy:
+                - abbr: HA
+                  href: https://www.haproxy.com/documentation/
+                  icon: haproxy.png
+            - Gitea:
+                - abbr: GT
+                  href: https://docs.gitea.com/
+                  icon: gitea.png
 
       services:
         - Infrastructure:
@@ -119,6 +173,11 @@ spec:
                 href: https://ipam.bsdserver.nl
                 icon: phpipam.png
                 description: IP Address Management
+
+            - Consul:
+                href: https://wbyc-srv-docker01.bsdserver.lan:8501/
+                icon: consul.png
+                description: Service Discovery & Config
 
         - Monitoring:
             - Grafana:
@@ -172,6 +231,27 @@ spec:
                 href: https://taiga.bsdserver.nl
                 icon: taiga.png
                 description: Project Management
+
+            - n8n:
+                href: https://n8n.bsdserver.nl
+                icon: n8n.png
+                description: Workflow Automation
+
+        - AI & ML:
+            - Open WebUI:
+                href: https://open-webui.bsdserver.nl
+                icon: open-webui.png
+                description: LLM Chat Interface
+
+            - Ollama:
+                href: https://ollama.bsdserver.nl
+                icon: ollama.png
+                description: Local LLM Server
+
+            - Qdrant:
+                href: https://qdrant.bsdserver.nl
+                icon: qdrant.png
+                description: Vector Database
 
         - Tools:
             - ByteStash:
@@ -237,6 +317,9 @@ spec:
             style: row
             columns: 3
           DevOps:
+            style: row
+            columns: 4
+          AI & ML:
             style: row
             columns: 3
           Tools:
