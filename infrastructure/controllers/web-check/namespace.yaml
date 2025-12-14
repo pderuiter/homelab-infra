@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: web-check
+  labels:
+    app.kubernetes.io/name: web-check
+    app.kubernetes.io/component: osint

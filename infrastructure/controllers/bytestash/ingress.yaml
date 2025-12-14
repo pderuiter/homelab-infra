@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bytestash
+  namespace: bytestash
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
+  labels:
+    app.kubernetes.io/name: bytestash
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: snippets.bsdserver.nl
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: bytestash
+                port:
+                  name: http
+  tls:
+    - hosts:
+        - snippets.bsdserver.nl
+      secretName: bytestash-tls

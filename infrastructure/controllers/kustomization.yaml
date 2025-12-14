@@ -16,3 +16,5 @@ resources:
   - observability
   - searxng
   - homepage
+  - bytestash
+  - web-check

@@ -137,6 +137,17 @@ spec:
                 icon: searxng.png
                 description: Search Engine
 
+        - Tools:
+            - ByteStash:
+                href: https://snippets.bsdserver.nl
+                icon: code.png
+                description: Code Snippet Manager
+
+            - Web-Check:
+                href: https://webcheck.bsdserver.nl
+                icon: web-check.png
+                description: Website OSINT Analyzer
+
         - External:
             - Pangolin:
                 href: https://pangolin.bsdserver.nl
@@ -192,6 +203,9 @@ spec:
           Applications:
             style: row
             columns: 3
+          Tools:
+            style: row
+            columns: 2
           External:
             style: row
             columns: 2
