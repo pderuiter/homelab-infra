@@ -56,6 +56,12 @@ spec:
           default: false
         exposedPort: 9100
         protocol: TCP
+      traefik:
+        port: 8080
+        expose:
+          default: false
+        exposedPort: 8080
+        protocol: TCP
 
     # Service configuration - use MetalLB
     service:
@@ -68,6 +74,11 @@ spec:
     ingressRoute:
       dashboard:
         enabled: false
+
+    # Enable API for Homepage widget
+    api:
+      dashboard: true
+      insecure: true
 
     # Logs
     logs:

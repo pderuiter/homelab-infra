@@ -85,7 +85,7 @@ spec:
                 description: Ingress Controller
                 widget:
                   type: traefik
-                  url: http://traefik-metrics.traefik.svc:9100
+                  url: http://traefik-api.traefik.svc:8080
 
             - Longhorn:
                 href: https://longhorn.bsdserver.nl
@@ -189,9 +189,6 @@ spec:
                 href: https://pangolin.bsdserver.nl
                 icon: cloudflare-zero-trust.png
                 description: Tunnel Gateway (VPS)
-                widget:
-                  type: traefik
-                  url: http://5.75.184.243:8082
 
       widgets:
         - kubernetes:
