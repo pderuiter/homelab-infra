@@ -105,6 +105,21 @@ spec:
                 icon: minio.png
                 description: Object Storage
 
+            - Keycloak:
+                href: https://keycloak.bsdserver.nl
+                icon: keycloak.png
+                description: Identity & Access Management
+
+            - Netbird:
+                href: https://vpn.bsdserver.nl
+                icon: netbird.png
+                description: VPN & Network Security
+
+            - phpIPAM:
+                href: https://ipam.bsdserver.nl
+                icon: phpipam.png
+                description: IP Address Management
+
         - Monitoring:
             - Grafana:
                 href: https://grafana.bsdserver.nl
@@ -121,6 +136,11 @@ spec:
                 icon: alertmanager.png
                 description: Alert Routing
 
+            - Ntfy:
+                href: https://ntfy.bsdserver.nl
+                icon: ntfy.png
+                description: Push Notifications
+
         - Applications:
             - Ghost:
                 href: https://blog.bsdserver.nl
@@ -136,6 +156,22 @@ spec:
                 href: https://search.bsdserver.nl
                 icon: searxng.png
                 description: Search Engine
+
+        - DevOps:
+            - SonarQube:
+                href: https://sonarqube.bsdserver.nl
+                icon: sonarqube.png
+                description: Code Quality & Security
+
+            - Ansible EDA:
+                href: https://eda-ui.bsdserver.nl
+                icon: ansible.png
+                description: Event-Driven Automation
+
+            - Taiga:
+                href: https://taiga.bsdserver.nl
+                icon: taiga.png
+                description: Project Management
 
         - Tools:
             - ByteStash:
@@ -201,6 +237,9 @@ spec:
             style: row
             columns: 4
           Applications:
+            style: row
+            columns: 3
+          DevOps:
             style: row
             columns: 3
           Tools:
