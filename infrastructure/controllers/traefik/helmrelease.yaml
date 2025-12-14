@@ -78,7 +78,10 @@ spec:
     # Enable API for Homepage widget
     api:
       dashboard: true
-      insecure: true
+
+    # Additional arguments for API access
+    additionalArguments:
+      - "--api.insecure=true"
 
     # Logs
     logs:
