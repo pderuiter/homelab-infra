@@ -155,7 +155,7 @@ spec:
                 description: Secrets Management
 
             - MinIO:
-                href: https://minio-console.bsdserver.nl
+                href: https://minio-k8s-console.bsdserver.nl
                 icon: minio.png
                 description: Object Storage
 

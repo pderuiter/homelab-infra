@@ -82,11 +82,11 @@ spec:
       annotations:
         cert-manager.io/cluster-issuer: letsencrypt-production
       hosts:
-        - minio-console.bsdserver.nl
+        - minio-k8s-console.bsdserver.nl
       tls:
         - secretName: minio-console-tls
           hosts:
-            - minio-console.bsdserver.nl
+            - minio-k8s-console.bsdserver.nl
 
     # Node affinity - only schedule on worker nodes
     affinity:
@@ -110,7 +110,7 @@ spec:
 
     # Environment variables
     environment:
-      MINIO_BROWSER_REDIRECT_URL: "https://minio-console.bsdserver.nl"
+      MINIO_BROWSER_REDIRECT_URL: "https://minio-k8s-console.bsdserver.nl"
 
     # Prometheus metrics
     metrics:
