@@ -70,7 +70,7 @@ spec:
             - sh
             - -c
             - |
-              until pg_isready -h listmonk-db -p 5432 -U listmonk; do
+              until pg_isready -h postgres-cluster-rw.databases.svc.cluster.local -p 5432 -U listmonk; do
                 echo "Waiting for PostgreSQL to be ready..."
                 sleep 2
               done
@@ -92,7 +92,7 @@ spec:
             - name: LISTMONK_app__address
               value: "0.0.0.0:9000"
             - name: LISTMONK_db__host
-              value: "listmonk-db"
+              value: "postgres-cluster-rw.databases.svc.cluster.local"
             - name: LISTMONK_db__port
               value: "5432"
             - name: LISTMONK_db__ssl_mode
