@@ -1,0 +1,8 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: listmonk
+  labels:
+    app.kubernetes.io/name: listmonk
+    app.kubernetes.io/managed-by: flux

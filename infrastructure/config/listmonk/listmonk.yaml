@@ -1,0 +1,140 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: listmonk
+  namespace: listmonk
+  labels:
+    app.kubernetes.io/name: listmonk
+    app.kubernetes.io/component: application
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9000
+      targetPort: 9000
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: listmonk
+    app.kubernetes.io/component: application
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: listmonk-uploads
+  namespace: listmonk
+  labels:
+    app.kubernetes.io/name: listmonk
+    app.kubernetes.io/component: application
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: listmonk
+  namespace: listmonk
+  labels:
+    app.kubernetes.io/name: listmonk
+    app.kubernetes.io/component: application
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: listmonk
+      app.kubernetes.io/component: application
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: listmonk
+        app.kubernetes.io/component: application
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: DoesNotExist
+      initContainers:
+        - name: wait-for-db
+          image: postgres:17-alpine
+          command:
+            - sh
+            - -c
+            - |
+              until pg_isready -h listmonk-db -p 5432 -U listmonk; do
+                echo "Waiting for PostgreSQL to be ready..."
+                sleep 2
+              done
+              echo "PostgreSQL is ready!"
+          envFrom:
+            - secretRef:
+                name: listmonk-app-secrets
+      containers:
+        - name: listmonk
+          image: listmonk/listmonk:v4.1.0
+          command:
+            - sh
+            - -c
+            - ./listmonk --install --idempotent --yes --config '' && ./listmonk --upgrade --yes --config '' && ./listmonk --config ''
+          ports:
+            - containerPort: 9000
+              name: http
+          env:
+            - name: LISTMONK_app__address
+              value: "0.0.0.0:9000"
+            - name: LISTMONK_db__host
+              value: "listmonk-db"
+            - name: LISTMONK_db__port
+              value: "5432"
+            - name: LISTMONK_db__ssl_mode
+              value: "disable"
+            - name: LISTMONK_db__max_open
+              value: "25"
+            - name: LISTMONK_db__max_idle
+              value: "25"
+            - name: LISTMONK_db__max_lifetime
+              value: "300s"
+            - name: TZ
+              value: "Europe/Amsterdam"
+          envFrom:
+            - secretRef:
+                name: listmonk-app-secrets
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 9000
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 9000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          volumeMounts:
+            - name: uploads
+              mountPath: /listmonk/uploads
+      volumes:
+        - name: uploads
+          persistentVolumeClaim:
+            claimName: listmonk-uploads

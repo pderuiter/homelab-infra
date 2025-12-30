@@ -1,0 +1,30 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: listmonk
+  namespace: listmonk
+  labels:
+    app.kubernetes.io/name: listmonk
+    app.kubernetes.io/component: application
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
+    external-dns.alpha.kubernetes.io/hostname: listmonk.bsdserver.nl
+    external-dns.alpha.kubernetes.io/target: wbyc-srv-vpn01.bsdserver.nl
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - listmonk.bsdserver.nl
+      secretName: listmonk-tls
+  rules:
+    - host: listmonk.bsdserver.nl
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: listmonk
+                port:
+                  number: 9000
