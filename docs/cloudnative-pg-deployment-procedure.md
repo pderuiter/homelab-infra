@@ -1027,7 +1027,7 @@ FATAL: password authentication failed for user "postgres"
 **Diagnosis**:
 ```bash
 # Check password in Vault
-export VAULT_ADDR=https://192.168.2.170:8200
+export VAULT_ADDR=https://wbyc-srv-docker01.bsdserver.lan:8200
 export VAULT_SKIP_VERIFY=1
 vault kv get secret/kubernetes/postgres/superuser
 

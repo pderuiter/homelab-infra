@@ -12,7 +12,7 @@ Run these commands on your Vault server or from a machine with Vault CLI access:
 
 ```bash
 # Set Vault address (if not already set)
-export VAULT_ADDR="https://192.168.2.170:8200"
+export VAULT_ADDR="https://wbyc-srv-docker01.bsdserver.lan:8200"
 
 # Authenticate to Vault (use your preferred method)
 vault login
@@ -104,7 +104,7 @@ vault policy read external-secrets-dns
 
 ### TLS errors
 - The CA certificate in `vault-ca-configmap.yaml` must match Vault's TLS certificate
-- Verify with: `openssl s_client -connect 192.168.2.170:8200 -showcerts`
+- Verify with: `openssl s_client -connect wbyc-srv-docker01.bsdserver.lan:8200 -showcerts`
 
 ## Architecture
 
@@ -126,7 +126,7 @@ vault policy read external-secrets-dns
             │
             ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    Vault (192.168.2.170:8200)                   │
+│                    Vault (wbyc-srv-docker01.bsdserver.lan:8200)                   │
 │  ┌─────────────────┐    ┌─────────────────────────────────────┐ │
 │  │ Kubernetes Auth │    │   Policy: external-secrets-dns      │ │
 │  │   (validates    │───▶│   - read secret/data/dns            │ │

@@ -150,7 +150,7 @@ spec:
                   url: http://longhorn-frontend.longhorn-system.svc:80
 
             - Vault:
-                href: https://192.168.2.170:8200
+                href: https://wbyc-srv-docker01.bsdserver.lan:8200
                 icon: vault.png
                 description: Secrets Management
 
