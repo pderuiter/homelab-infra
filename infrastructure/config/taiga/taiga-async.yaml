@@ -26,6 +26,13 @@ spec:
               - matchExpressions:
                   - key: node-role.kubernetes.io/control-plane
                     operator: DoesNotExist
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: taiga
+                  app.kubernetes.io/component: back
+              topologyKey: kubernetes.io/hostname
       initContainers:
         - name: wait-for-rabbitmq
           image: busybox:1.36

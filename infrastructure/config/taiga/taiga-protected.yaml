@@ -45,6 +45,13 @@ spec:
               - matchExpressions:
                   - key: node-role.kubernetes.io/control-plane
                     operator: DoesNotExist
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: taiga
+                  app.kubernetes.io/component: back
+              topologyKey: kubernetes.io/hostname
       containers:
         - name: taiga-protected
           image: taigaio/taiga-protected:latest
