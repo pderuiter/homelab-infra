@@ -59,7 +59,7 @@ spec:
             - containerPort: 8003
               name: http
           env:
-            - name: TAIGA_SECRET_KEY
+            - name: SECRET_KEY
               valueFrom:
                 secretKeyRef:
                   name: taiga-secrets
