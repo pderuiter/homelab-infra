@@ -1,0 +1,202 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: taiga-back
+  namespace: taiga
+  labels:
+    app.kubernetes.io/name: taiga
+    app.kubernetes.io/component: back
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: taiga
+    app.kubernetes.io/component: back
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: taiga-media
+  namespace: taiga
+  labels:
+    app.kubernetes.io/name: taiga
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: taiga-static
+  namespace: taiga
+  labels:
+    app.kubernetes.io/name: taiga
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: taiga-back
+  namespace: taiga
+  labels:
+    app.kubernetes.io/name: taiga
+    app.kubernetes.io/component: back
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: taiga
+      app.kubernetes.io/component: back
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: taiga
+        app.kubernetes.io/component: back
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: DoesNotExist
+      initContainers:
+        - name: wait-for-db
+          image: postgres:17-alpine
+          command:
+            - sh
+            - -c
+            - |
+              until pg_isready -h $POSTGRES_HOST -p 5432 -U $POSTGRES_USER; do
+                echo "Waiting for PostgreSQL..."
+                sleep 2
+              done
+        - name: wait-for-rabbitmq
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z taiga-rabbitmq 5672; do
+                echo "Waiting for RabbitMQ..."
+                sleep 2
+              done
+          env:
+            - name: POSTGRES_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: taiga-secrets
+                  key: POSTGRES_HOST
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: taiga-secrets
+                  key: POSTGRES_USER
+      containers:
+        - name: taiga-back
+          image: taigaio/taiga-back:latest
+          ports:
+            - containerPort: 8000
+              name: http
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: taiga-secrets
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: taiga-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: taiga-secrets
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: taiga-secrets
+                  key: POSTGRES_HOST
+            - name: TAIGA_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: taiga-secrets
+                  key: TAIGA_SECRET_KEY
+            - name: TAIGA_SITES_SCHEME
+              value: "https"
+            - name: TAIGA_SITES_DOMAIN
+              value: "taiga.bsdserver.nl"
+            - name: TAIGA_SUBPATH
+              value: ""
+            - name: EVENTS_PUSH_BACKEND
+              value: "taiga.events.backends.rabbitmq.EventsPushBackend"
+            - name: CELERY_BROKER_URL
+              value: "amqp://$(RABBITMQ_USER):$(RABBITMQ_PASS)@taiga-rabbitmq:5672/taiga"
+            - name: RABBITMQ_USER
+              valueFrom:
+                secretKeyRef:
+                  name: taiga-secrets
+                  key: RABBITMQ_USER
+            - name: RABBITMQ_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: taiga-secrets
+                  key: RABBITMQ_PASS
+            - name: EVENTS_PUSH_BACKEND_URL
+              value: "amqp://$(RABBITMQ_USER):$(RABBITMQ_PASS)@taiga-rabbitmq:5672/taiga"
+            - name: ENABLE_TELEMETRY
+              value: "False"
+            - name: PUBLIC_REGISTER_ENABLED
+              value: "False"
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          volumeMounts:
+            - name: media
+              mountPath: /taiga-back/media
+            - name: static
+              mountPath: /taiga-back/static
+          livenessProbe:
+            httpGet:
+              path: /api/v1/
+              port: 8000
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /api/v1/
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+      volumes:
+        - name: media
+          persistentVolumeClaim:
+            claimName: taiga-media
+        - name: static
+          persistentVolumeClaim:
+            claimName: taiga-static

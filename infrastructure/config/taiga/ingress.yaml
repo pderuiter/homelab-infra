@@ -1,0 +1,69 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: taiga
+  namespace: taiga
+  labels:
+    app.kubernetes.io/name: taiga
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
+    traefik.ingress.kubernetes.io/router.middlewares: ""
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - taiga.bsdserver.nl
+      secretName: taiga-tls
+  rules:
+    - host: taiga.bsdserver.nl
+      http:
+        paths:
+          # Frontend - serves static files
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: taiga-front
+                port:
+                  number: 80
+          # Backend API
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: taiga-back
+                port:
+                  number: 8000
+          # Admin interface
+          - path: /admin
+            pathType: Prefix
+            backend:
+              service:
+                name: taiga-back
+                port:
+                  number: 8000
+          # Static files from backend
+          - path: /static
+            pathType: Prefix
+            backend:
+              service:
+                name: taiga-back
+                port:
+                  number: 8000
+          # Protected media files
+          - path: /media
+            pathType: Prefix
+            backend:
+              service:
+                name: taiga-protected
+                port:
+                  number: 8003
+          # WebSocket events
+          - path: /events
+            pathType: Prefix
+            backend:
+              service:
+                name: taiga-events
+                port:
+                  number: 8888

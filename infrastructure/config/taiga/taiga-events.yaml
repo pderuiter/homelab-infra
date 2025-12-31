@@ -1,0 +1,89 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: taiga-events
+  namespace: taiga
+  labels:
+    app.kubernetes.io/name: taiga
+    app.kubernetes.io/component: events
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8888
+      targetPort: 8888
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: taiga
+    app.kubernetes.io/component: events
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: taiga-events
+  namespace: taiga
+  labels:
+    app.kubernetes.io/name: taiga
+    app.kubernetes.io/component: events
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: taiga
+      app.kubernetes.io/component: events
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: taiga
+        app.kubernetes.io/component: events
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: DoesNotExist
+      initContainers:
+        - name: wait-for-rabbitmq
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z taiga-rabbitmq 5672; do
+                echo "Waiting for RabbitMQ..."
+                sleep 2
+              done
+      containers:
+        - name: taiga-events
+          image: taigaio/taiga-events:latest
+          ports:
+            - containerPort: 8888
+              name: http
+          env:
+            - name: TAIGA_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: taiga-secrets
+                  key: TAIGA_SECRET_KEY
+            - name: RABBITMQ_USER
+              valueFrom:
+                secretKeyRef:
+                  name: taiga-secrets
+                  key: RABBITMQ_USER
+            - name: RABBITMQ_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: taiga-secrets
+                  key: RABBITMQ_PASS
+            - name: RABBITMQ_URL
+              value: "amqp://$(RABBITMQ_USER):$(RABBITMQ_PASS)@taiga-rabbitmq:5672/taiga"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi

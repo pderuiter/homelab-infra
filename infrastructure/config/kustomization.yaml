@@ -9,3 +9,4 @@ resources:
   - ghost
   - homelab-dashboard
   - listmonk
+  - taiga
