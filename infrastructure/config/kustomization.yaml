@@ -11,3 +11,4 @@ resources:
   - listmonk
   - taiga
   - sonarqube
+  - phpipam
