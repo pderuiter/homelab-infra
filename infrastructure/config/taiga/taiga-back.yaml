@@ -88,16 +88,6 @@ spec:
                 echo "Waiting for PostgreSQL..."
                 sleep 2
               done
-        - name: wait-for-rabbitmq
-          image: busybox:1.36
-          command:
-            - sh
-            - -c
-            - |
-              until nc -z taiga-rabbitmq 5672; do
-                echo "Waiting for RabbitMQ..."
-                sleep 2
-              done
           env:
             - name: POSTGRES_HOST
               valueFrom:
@@ -109,6 +99,16 @@ spec:
                 secretKeyRef:
                   name: taiga-secrets
                   key: POSTGRES_USER
+        - name: wait-for-rabbitmq
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z taiga-rabbitmq 5672; do
+                echo "Waiting for RabbitMQ..."
+                sleep 2
+              done
       containers:
         - name: taiga-back
           image: taigaio/taiga-back:latest
