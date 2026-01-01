@@ -1,0 +1,56 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: eda-ui
+  namespace: eda
+  labels:
+    app.kubernetes.io/name: eda
+    app.kubernetes.io/component: ui
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - eda.bsdserver.nl
+      secretName: eda-ui-tls
+  rules:
+    - host: eda.bsdserver.nl
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: eda-ui
+                port:
+                  number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: eda-api
+  namespace: eda
+  labels:
+    app.kubernetes.io/name: eda
+    app.kubernetes.io/component: server
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - eda-api.bsdserver.nl
+      secretName: eda-api-tls
+  rules:
+    - host: eda-api.bsdserver.nl
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: eda-server
+                port:
+                  number: 8000

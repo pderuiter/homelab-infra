@@ -12,3 +12,4 @@ resources:
   - taiga
   - sonarqube
   - phpipam
+  - eda
