@@ -94,6 +94,8 @@ spec:
               value: "Europe/Amsterdam"
             - name: IPAM_DISABLE_INSTALLER
               value: "1"
+            - name: IPAM_TRUST_X_FORWARDED
+              value: "true"
           resources:
             requests:
               cpu: 100m
