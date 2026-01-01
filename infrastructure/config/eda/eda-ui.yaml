@@ -53,11 +53,11 @@ spec:
               name: http
           env:
             - name: EDA_SERVER
-              value: "http://eda-server.eda.svc.cluster.local:8000"
+              value: "http://eda-server:8000"
             - name: EDA_WEBHOOK_SERVER
-              value: "https://eda-api.bsdserver.nl"
+              value: "http://eda-server:8000"
             - name: EDA_WEBSOCKET_URL
-              value: "wss://eda-api.bsdserver.nl"
+              value: "ws://eda-server:8000"
           resources:
             requests:
               cpu: 50m
