@@ -73,7 +73,11 @@ spec:
       type: LoadBalancer
       annotations: {}
       spec:
-        externalTrafficPolicy: Cluster
+        externalTrafficPolicy: Local
+
+    # Pin Traefik to worker02 for stable MetalLB IP announcement
+    nodeSelector:
+      kubernetes.io/hostname: wbyc-k8s-worker02
 
     # Disable default dashboard IngressRoute - we create our own with hostname
     ingressRoute:
