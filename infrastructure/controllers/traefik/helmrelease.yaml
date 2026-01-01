@@ -72,7 +72,8 @@ spec:
       enabled: true
       type: LoadBalancer
       annotations: {}
-      spec: {}
+      spec:
+        externalTrafficPolicy: Local
 
     # Disable default dashboard IngressRoute - we create our own with hostname
     ingressRoute:
