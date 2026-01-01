@@ -73,7 +73,7 @@ spec:
       type: LoadBalancer
       annotations: {}
       spec:
-        externalTrafficPolicy: Local
+        externalTrafficPolicy: Cluster
 
     # Disable default dashboard IngressRoute - we create our own with hostname
     ingressRoute:
