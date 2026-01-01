@@ -9,6 +9,7 @@ metadata:
     app.kubernetes.io/component: ui
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-production
+    traefik.ingress.kubernetes.io/service.serversscheme: https
 spec:
   ingressClassName: traefik
   tls:
@@ -25,7 +26,7 @@ spec:
               service:
                 name: eda-ui
                 port:
-                  number: 80
+                  number: 443
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
