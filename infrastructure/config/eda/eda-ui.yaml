@@ -7,6 +7,9 @@ metadata:
   labels:
     app.kubernetes.io/name: eda
     app.kubernetes.io/component: ui
+  annotations:
+    traefik.ingress.kubernetes.io/service.serversscheme: https
+    traefik.ingress.kubernetes.io/service.serverstransport: eda-insecure-backend@kubernetescrd
 spec:
   type: ClusterIP
   ports:
