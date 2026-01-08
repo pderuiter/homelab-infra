@@ -6,6 +6,7 @@ resources:
   - externalsecrets.yaml
   - keycloak.yaml
   - ingress.yaml
+  - servicemonitor.yaml
 configMapGenerator:
   - name: keycloak-realm-import
     files:
