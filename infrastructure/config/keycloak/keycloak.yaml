@@ -25,6 +25,8 @@ metadata:
     app.kubernetes.io/name: keycloak
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app.kubernetes.io/name: keycloak
@@ -54,6 +56,13 @@ spec:
           envFrom:
             - secretRef:
                 name: keycloak-database
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
       containers:
         - name: keycloak
           image: quay.io/keycloak/keycloak:24.0.2
@@ -64,18 +73,44 @@ spec:
             - containerPort: 8080
               name: http
           env:
+            # Database configuration
             - name: KC_DB
               value: postgres
+            # Hostname configuration
             - name: KC_HOSTNAME
               value: keycloak.bsdserver.nl
             - name: KC_HOSTNAME_STRICT
               value: "false"
+            - name: KC_HOSTNAME_STRICT_HTTPS
+              value: "false"
+            # HTTP/Proxy configuration
             - name: KC_HTTP_ENABLED
               value: "true"
             - name: KC_PROXY_HEADERS
               value: xforwarded
+            # Health and metrics
             - name: KC_HEALTH_ENABLED
               value: "true"
+            - name: KC_METRICS_ENABLED
+              value: "true"
+            # Cache configuration - local mode for single instance
+            - name: KC_CACHE
+              value: local
+            # JVM tuning for better performance
+            - name: JAVA_OPTS_APPEND
+              value: >-
+                -XX:+UseG1GC
+                -XX:MaxGCPauseMillis=100
+                -XX:+UseStringDeduplication
+                -Djava.net.preferIPv4Stack=true
+                -Djgroups.dns.query=keycloak-headless.keycloak.svc.cluster.local
+            - name: JAVA_OPTS_KC_HEAP
+              value: "-Xms512m -Xmx1024m"
+            # Quarkus/Keycloak tuning
+            - name: KC_LOG_LEVEL
+              value: "INFO"
+            - name: KC_SPI_STICKY_SESSION_ENCODER_INFINISPAN_SHOULD_ATTACH_ROUTE
+              value: "false"
           envFrom:
             - secretRef:
                 name: keycloak-database
@@ -86,25 +121,35 @@ spec:
               mountPath: /opt/keycloak/data/import
           resources:
             requests:
-              cpu: 200m
-              memory: 512Mi
+              cpu: 500m
+              memory: 768Mi
             limits:
-              cpu: 1000m
-              memory: 1Gi
+              cpu: 2000m
+              memory: 1536Mi
           livenessProbe:
             httpGet:
               path: /health/live
               port: 8080
-            initialDelaySeconds: 120
+            initialDelaySeconds: 60
             periodSeconds: 30
             timeoutSeconds: 10
+            failureThreshold: 5
           readinessProbe:
             httpGet:
               path: /health/ready
               port: 8080
-            initialDelaySeconds: 60
+            initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /health/started
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 30
       volumes:
         - name: realm-import
           configMap:
