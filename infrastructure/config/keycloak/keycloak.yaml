@@ -93,17 +93,18 @@ spec:
               value: "true"
             - name: KC_METRICS_ENABLED
               value: "true"
+            # Expose metrics on main HTTP port (legacy mode)
+            - name: KC_LEGACY_OBSERVABILITY_INTERFACE
+              value: "true"
             # Cache configuration - local mode for single instance
             - name: KC_CACHE
               value: local
             # JVM tuning for better performance
             - name: JAVA_OPTS_APPEND
               value: >-
-                -XX:+UseG1GC
                 -XX:MaxGCPauseMillis=100
                 -XX:+UseStringDeduplication
                 -Djava.net.preferIPv4Stack=true
-                -Djgroups.dns.query=keycloak-headless.keycloak.svc.cluster.local
             - name: JAVA_OPTS_KC_HEAP
               value: "-Xms512m -Xmx1024m"
             # Quarkus/Keycloak tuning
