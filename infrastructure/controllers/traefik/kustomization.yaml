@@ -6,3 +6,4 @@ resources:
   - helmrelease.yaml
   - dashboard-ingressroute.yaml
   - api-service.yaml
+  - servicemonitor.yaml

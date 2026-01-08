@@ -10,4 +10,5 @@ resources:
   - grafana-helmrelease.yaml
   - minio-dashboard-configmap.yaml
   - pangolin-dashboard-configmap.yaml
+  - traefik-dashboard-configmap.yaml
   - ntfy-helmrelease.yaml
