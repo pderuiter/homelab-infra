@@ -3245,7 +3245,11 @@ data:
       "templating": {
         "list": [
           {
-            "current": {},
+            "current": {
+              "selected": true,
+              "text": "Prometheus",
+              "value": "prometheus"
+            },
             "hide": 1,
             "includeAll": false,
             "name": "PROMETHEUS_DS",
@@ -3256,7 +3260,11 @@ data:
             "type": "datasource"
           },
           {
-            "current": {},
+            "current": {
+              "selected": true,
+              "text": "keycloak",
+              "value": "keycloak"
+            },
             "datasource": {
               "type": "prometheus",
               "uid": "prometheus"
@@ -3271,18 +3279,23 @@ data:
               "query": "label_values(base_thread_count,job)",
               "refId": "PrometheusVariableQueryEditor-VariableQuery"
             },
-            "refresh": 2,
+            "refresh": 1,
             "regex": "",
             "type": "query"
           },
           {
-            "current": {},
+            "allValue": ".*",
+            "current": {
+              "selected": true,
+              "text": "All",
+              "value": "$__all"
+            },
             "datasource": {
               "type": "prometheus",
               "uid": "prometheus"
             },
             "definition": "label_values(base_thread_count{job=\"$job\"},instance)",
-            "includeAll": false,
+            "includeAll": true,
             "label": "Host",
             "multi": true,
             "name": "instance",
@@ -3292,7 +3305,7 @@ data:
               "query": "label_values(base_thread_count{job=\"$job\"},instance)",
               "refId": "PrometheusVariableQueryEditor-VariableQuery"
             },
-            "refresh": 2,
+            "refresh": 1,
             "regex": "",
             "type": "query"
           }
