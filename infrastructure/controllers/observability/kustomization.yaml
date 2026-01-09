@@ -8,6 +8,7 @@ resources:
   - loki-helmrelease.yaml
   - alloy-helmrelease.yaml
   - grafana-helmrelease.yaml
+  - keycloak-dashboard-configmap.yaml
   - minio-dashboard-configmap.yaml
   - pangolin-dashboard-configmap.yaml
   - traefik-dashboard-configmap.yaml
