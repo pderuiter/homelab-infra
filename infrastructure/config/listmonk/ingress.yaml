@@ -10,7 +10,7 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-production
     external-dns.alpha.kubernetes.io/hostname: listmonk.bsdserver.nl
-    external-dns.alpha.kubernetes.io/target: wbyc-srv-vpn01.bsdserver.nl
+    external-dns.alpha.kubernetes.io/target: 192.168.2.160
 spec:
   ingressClassName: traefik
   tls:

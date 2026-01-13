@@ -54,6 +54,7 @@ spec:
       ingressClassName: traefik
       annotations:
         cert-manager.io/cluster-issuer: letsencrypt-production
+        external-dns.alpha.kubernetes.io/target: 192.168.2.160
       hosts:
         - grafana.bsdserver.nl
       tls:
