@@ -76,9 +76,14 @@ spec:
         loadBalancerIP: 192.168.2.160
         externalTrafficPolicy: Local
 
-    # Pin Traefik to worker02 for stable MetalLB IP announcement
-    nodeSelector:
-      kubernetes.io/hostname: wbyc-k8s-worker02
+    # Schedule on any worker node (not control-plane)
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: node-role.kubernetes.io/control-plane
+                  operator: DoesNotExist
 
     # Disable default dashboard IngressRoute - we create our own with hostname
     ingressRoute:
