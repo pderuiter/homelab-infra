@@ -178,15 +178,15 @@ spec:
         cookie_samesite: lax
       users:
         allow_sign_up: false
-      # Extend session timeouts to reduce token rotation issues
+      # Minimize token rotation and extend session lifetime for homelab use
       auth:
-        token_rotation_interval_minutes: 60
-        login_maximum_inactive_lifetime_duration: 7d
-        login_maximum_lifetime_duration: 30d
-      # Grafana Live (websocket) settings
+        token_rotation_interval_minutes: 1440
+        login_maximum_inactive_lifetime_duration: 30d
+        login_maximum_lifetime_duration: 365d
+      # Disable Grafana Live (websocket) - causes token rotation issues
       live:
-        allowed_origins: "*"
-        max_connections: 100
+        allowed_origins: ""
+        max_connections: 0
       # Increase dataproxy timeout for heavy queries (Node Exporter Full, etc.)
       dataproxy:
         timeout: 120
