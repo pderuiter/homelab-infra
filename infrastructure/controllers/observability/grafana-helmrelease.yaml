@@ -73,11 +73,18 @@ spec:
             access: proxy
             isDefault: true
             editable: false
+            jsonData:
+              timeInterval: 30s
+              queryTimeout: 120s
+              httpMethod: POST
           - name: Loki
             type: loki
             url: http://loki-gateway.observability.svc:80
             access: proxy
             editable: false
+            jsonData:
+              timeout: 120
+              maxLines: 5000
           - name: Alertmanager
             type: alertmanager
             url: http://kube-prometheus-stack-alertmanager.observability.svc:9093
@@ -176,10 +183,14 @@ spec:
         token_rotation_interval_minutes: 60
         login_maximum_inactive_lifetime_duration: 7d
         login_maximum_lifetime_duration: 30d
-      # Disable Grafana Live (websocket) features to prevent failed to fetch errors
+      # Grafana Live (websocket) settings
       live:
         allowed_origins: "*"
         max_connections: 100
+      # Increase dataproxy timeout for heavy queries (Node Exporter Full, etc.)
+      dataproxy:
+        timeout: 120
+        keep_alive_seconds: 30
 
     # Affinity
     affinity:
