@@ -1,0 +1,201 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: homelab-alerts
+  namespace: observability
+  labels:
+    app: kube-prometheus-stack
+    release: kube-prometheus-stack
+spec:
+  groups:
+    # External Secrets Operator alerts
+    - name: external-secrets
+      rules:
+        - alert: ExternalSecretSyncFailed
+          expr: external_secrets_sync_calls_error{status="SecretSyncedError"} > 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "ExternalSecret sync failed"
+            description: "ExternalSecret {{ $labels.name }} in namespace {{ $labels.namespace }} failed to sync for more than 5 minutes."
+
+        - alert: ExternalSecretNotReady
+          expr: external_secrets_status_condition{condition="Ready", status="False"} == 1
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "ExternalSecret not ready"
+            description: "ExternalSecret {{ $labels.name }} in namespace {{ $labels.namespace }} is not ready for more than 10 minutes."
+
+    # Flux GitOps alerts
+    - name: flux
+      rules:
+        - alert: FluxKustomizationNotReady
+          expr: gotk_reconcile_condition{type="Ready", status="False", kind="Kustomization"} == 1
+          for: 15m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Flux Kustomization not ready"
+            description: "Flux Kustomization {{ $labels.name }} in namespace {{ $labels.namespace }} has been failing for more than 15 minutes."
+
+        - alert: FluxHelmReleaseNotReady
+          expr: gotk_reconcile_condition{type="Ready", status="False", kind="HelmRelease"} == 1
+          for: 15m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Flux HelmRelease not ready"
+            description: "Flux HelmRelease {{ $labels.name }} in namespace {{ $labels.namespace }} has been failing for more than 15 minutes."
+
+        - alert: FluxGitRepositoryNotReady
+          expr: gotk_reconcile_condition{type="Ready", status="False", kind="GitRepository"} == 1
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Flux GitRepository not ready"
+            description: "Flux GitRepository {{ $labels.name }} in namespace {{ $labels.namespace }} has been failing for more than 15 minutes."
+
+        - alert: FluxSuspended
+          expr: gotk_suspend_status == 1
+          for: 1h
+          labels:
+            severity: warning
+          annotations:
+            summary: "Flux resource suspended"
+            description: "Flux {{ $labels.kind }} {{ $labels.name }} in namespace {{ $labels.namespace }} has been suspended for more than 1 hour."
+
+    # Certificate Manager alerts
+    - name: cert-manager
+      rules:
+        - alert: CertificateExpiringSoon
+          expr: certmanager_certificate_expiration_timestamp_seconds - time() < 7 * 24 * 3600
+          for: 1h
+          labels:
+            severity: warning
+          annotations:
+            summary: "Certificate expiring soon"
+            description: "Certificate {{ $labels.name }} in namespace {{ $labels.namespace }} expires in less than 7 days."
+
+        - alert: CertificateExpiryCritical
+          expr: certmanager_certificate_expiration_timestamp_seconds - time() < 24 * 3600
+          for: 1h
+          labels:
+            severity: critical
+          annotations:
+            summary: "Certificate expiry critical"
+            description: "Certificate {{ $labels.name }} in namespace {{ $labels.namespace }} expires in less than 24 hours!"
+
+        - alert: CertificateNotReady
+          expr: certmanager_certificate_ready_status{condition="False"} == 1
+          for: 30m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Certificate not ready"
+            description: "Certificate {{ $labels.name }} in namespace {{ $labels.namespace }} is not ready for more than 30 minutes."
+
+    # Vault connectivity alerts
+    - name: vault
+      rules:
+        - alert: VaultSecretStoreNotReady
+          expr: external_secrets_provider_status{status!="Valid"} == 1
+          for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Vault SecretStore not ready"
+            description: "SecretStore/ClusterSecretStore {{ $labels.name }} is not valid - Vault may be unreachable."
+
+    # Pod health alerts
+    - name: pod-health
+      rules:
+        - alert: PodRestartingTooOften
+          expr: increase(kube_pod_container_status_restarts_total[1h]) > 5
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Pod restarting frequently"
+            description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has restarted more than 5 times in the last hour."
+
+        - alert: PodCrashLooping
+          expr: increase(kube_pod_container_status_restarts_total[15m]) > 3
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Pod crash looping"
+            description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is crash looping (3+ restarts in 15 minutes)."
+
+        - alert: PodNotReady
+          expr: kube_pod_status_ready{condition="false"} == 1
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Pod not ready"
+            description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has been not ready for more than 15 minutes."
+
+    # Longhorn storage alerts
+    - name: longhorn
+      rules:
+        - alert: LonghornVolumeStatusCritical
+          expr: longhorn_volume_robustness == 3
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Longhorn volume degraded"
+            description: "Longhorn volume {{ $labels.volume }} is in a critical/faulted state."
+
+        - alert: LonghornVolumeStatusDegraded
+          expr: longhorn_volume_robustness == 2
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Longhorn volume degraded"
+            description: "Longhorn volume {{ $labels.volume }} is degraded for more than 15 minutes."
+
+        - alert: LonghornNodeStorageLow
+          expr: (longhorn_node_storage_capacity_bytes - longhorn_node_storage_usage_bytes) / longhorn_node_storage_capacity_bytes < 0.15
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Longhorn node storage low"
+            description: "Longhorn node {{ $labels.node }} has less than 15% storage capacity remaining."
+
+    # Node resource pressure alerts
+    - name: node-pressure
+      rules:
+        - alert: NodeHighMemoryPressure
+          expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 0.9
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Node memory pressure high"
+            description: "Node {{ $labels.instance }} is using more than 90% of available memory."
+
+        - alert: NodeHighCPUUsage
+          expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 90
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Node CPU usage high"
+            description: "Node {{ $labels.instance }} CPU usage is above 90% for more than 15 minutes."
+
+        - alert: NodeDiskPressure
+          expr: (1 - (node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay"})) > 0.85
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Node disk pressure"
+            description: "Node {{ $labels.instance }} filesystem {{ $labels.mountpoint }} is more than 85% full."

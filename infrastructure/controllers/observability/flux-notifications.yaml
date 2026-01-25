@@ -1,0 +1,55 @@
+---
+# Flux Notification Provider for ntfy
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Provider
+metadata:
+  name: ntfy
+  namespace: flux-system
+spec:
+  type: generic
+  address: http://ntfy.observability.svc:80/flux
+---
+# Alert for all Flux reconciliation failures
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Alert
+metadata:
+  name: flux-alerts
+  namespace: flux-system
+spec:
+  providerRef:
+    name: ntfy
+  eventSeverity: error
+  eventSources:
+    # GitRepository failures
+    - kind: GitRepository
+      name: '*'
+      namespace: flux-system
+    # Kustomization failures
+    - kind: Kustomization
+      name: '*'
+    # HelmRelease failures
+    - kind: HelmRelease
+      name: '*'
+    # HelmRepository failures
+    - kind: HelmRepository
+      name: '*'
+  summary: "Flux reconciliation failed"
+---
+# Alert for info-level events (successful reconciliations - optional, can be noisy)
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Alert
+metadata:
+  name: flux-info
+  namespace: flux-system
+spec:
+  providerRef:
+    name: ntfy
+  eventSeverity: info
+  eventSources:
+    # Only watch for new deployments via GitRepository
+    - kind: GitRepository
+      name: flux-system
+      namespace: flux-system
+  inclusionList:
+    - ".*revision.*"
+  summary: "Flux deployment update"

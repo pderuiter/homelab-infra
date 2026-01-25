@@ -13,3 +13,5 @@ resources:
   - pangolin-dashboard-configmap.yaml
   # traefik-dashboard-configmap.yaml removed - duplicate of Helm-provisioned dashboard
   - ntfy-helmrelease.yaml
+  - homelab-prometheusrules.yaml
+  - flux-notifications.yaml
