@@ -132,7 +132,6 @@ spec:
                   icon: gitea.png
 
       services:
-        # ===== CLUSTER ARCHITECTURE =====
         - Infrastructure:
             - Traefik:
                 href: https://traefik.bsdserver.nl
@@ -160,42 +159,36 @@ spec:
                 icon: minio.png
                 description: Object Storage
 
+            - Keycloak:
+                href: https://keycloak.bsdserver.nl
+                icon: keycloak.png
+                description: Identity & Access Management
+
             - Netbird:
                 href: https://vpn.bsdserver.nl
                 icon: netbird.png
                 description: VPN & Network Security
+
+            - phpIPAM:
+                href: https://ipam.bsdserver.nl
+                icon: phpipam.png
+                description: IP Address Management
 
             - Consul:
                 href: https://wbyc-srv-docker01.bsdserver.lan:8501/
                 icon: consul.png
                 description: Service Discovery & Config
 
-        - Observability:
+        - Monitoring:
             - Grafana:
                 href: https://grafana.bsdserver.nl
                 icon: grafana.png
                 description: Dashboards & Visualization
-                widget:
-                  type: grafana
-                  url: http://grafana.observability.svc:80
 
             - Prometheus:
                 href: https://prometheus.bsdserver.nl
                 icon: prometheus.png
                 description: Metrics Database
-                widget:
-                  type: prometheus
-                  url: http://prometheus-server.observability.svc:80
-
-            - Loki:
-                href: https://grafana.bsdserver.nl/explore
-                icon: loki.png
-                description: Log Aggregation
-
-            - Alloy:
-                href: https://grafana.bsdserver.nl
-                icon: grafana.png
-                description: Telemetry Collector
 
             - Alertmanager:
                 href: https://alertmanager.bsdserver.nl
@@ -207,7 +200,6 @@ spec:
                 icon: ntfy.png
                 description: Push Notifications
 
-        # ===== DEPLOYED APPLICATIONS =====
         - Applications:
             - Ghost:
                 href: https://blog.bsdserver.nl
@@ -224,26 +216,11 @@ spec:
                 icon: searxng.png
                 description: Search Engine
 
-            - Keycloak:
-                href: https://keycloak.bsdserver.nl
-                icon: keycloak.png
-                description: Identity & Access Management
-
-            - phpIPAM:
-                href: https://ipam.bsdserver.nl
-                icon: phpipam.png
-                description: IP Address Management
-
         - DevOps:
             - SonarQube:
                 href: https://sonarqube.bsdserver.nl
                 icon: sonarqube.png
                 description: Code Quality & Security
-
-            - Nexus:
-                href: https://nexus.bsdserver.nl
-                icon: nexus.png
-                description: Artifact Repository
 
             - Ansible EDA:
                 href: https://eda-ui.bsdserver.nl
@@ -332,34 +309,25 @@ spec:
         layout:
           Infrastructure:
             style: row
-            columns: 3
-            header: true
-            tab: Cluster Architecture
-          Observability:
+            columns: 4
+          Monitoring:
             style: row
-            columns: 3
-            tab: Cluster Architecture
+            columns: 4
           Applications:
             style: row
-            columns: 5
-            header: true
-            tab: Deployed Applications
+            columns: 3
           DevOps:
             style: row
-            columns: 5
-            tab: Deployed Applications
+            columns: 4
           AI & ML:
             style: row
             columns: 3
-            tab: Deployed Applications
           Tools:
             style: row
             columns: 2
-            tab: Deployed Applications
           External:
             style: row
-            columns: 1
-            tab: Deployed Applications
+            columns: 2
 
     # Resources
     resources:
