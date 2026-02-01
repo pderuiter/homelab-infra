@@ -1,0 +1,35 @@
+services:
+  nexus:
+    image: sonatype/nexus3:latest
+    container_name: nexus
+    restart: unless-stopped
+    user: "200:200"
+    environment:
+      - INSTALL4J_ADD_VM_PARAMS=-Xms1024m -Xmx2048m -XX:MaxDirectMemorySize=2g -Djava.util.prefs.userRoot=/nexus-data/javaprefs
+    volumes:
+      - /opt/nexus-data:/nexus-data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/service/rest/v1/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
+    networks:
+      - traefik_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nexus.rule=Host(\`nexus.bsdserver.nl\`)"
+      - "traefik.http.routers.nexus.entrypoints=websecure"
+      - "traefik.http.routers.nexus.tls=true"
+      - "traefik.http.routers.nexus.tls.certresolver=letsencrypt"
+      - "traefik.http.services.nexus.loadbalancer.server.port=8081"
+
+networks:
+  traefik_network:
+    external: true
