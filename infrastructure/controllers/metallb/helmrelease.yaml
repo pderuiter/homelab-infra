@@ -23,7 +23,17 @@ spec:
     remediation:
       retries: 3
   values:
-    # Default values are fine for most cases
+    # IMPORTANT: kube-proxy must have strictARP: true when using IPVS mode.
+    # Without it, every node responds to ARP for LoadBalancer IPs (bound to
+    # kube-ipvs0), causing traffic to land on nodes without the target pod.
+    # This results in intermittent timeouts and blackholed connections.
+    #
+    # Verify with:
+    #   kubectl get configmap kube-proxy -n kube-system -o yaml | grep strictARP
+    #
+    # Fix with:
+    #   kubectl edit configmap kube-proxy -n kube-system  # set strictARP: true
+    #   kubectl rollout restart daemonset kube-proxy -n kube-system
     controller:
       tolerations:
         - key: "node-role.kubernetes.io/control-plane"
