@@ -100,14 +100,14 @@ spec:
             hosts:
               - prometheus.bsdserver.nl
 
-    # Alertmanager configuration - migrated to Synology CSI
+    # Alertmanager configuration
     alertmanager:
       alertmanagerSpec:
         replicas: 1
         storage:
           volumeClaimTemplate:
             spec:
-              storageClassName: synology-iscsi
+              storageClassName: longhorn
               accessModes: ["ReadWriteOnce"]
               resources:
                 requests:
