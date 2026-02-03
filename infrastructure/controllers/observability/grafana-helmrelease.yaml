@@ -91,7 +91,7 @@ spec:
           - name: Prometheus
             uid: prometheus
             type: prometheus
-            url: http://kube-prometheus-stack-prometheus.observability.svc:9090
+            url: http://kube-prometheus-stack-prometheus.observability.svc.cluster.local:9090
             access: proxy
             isDefault: true
             editable: false
@@ -101,7 +101,7 @@ spec:
               httpMethod: GET
           - name: Loki
             type: loki
-            url: http://loki-gateway.observability.svc:80
+            url: http://loki-gateway.observability.svc.cluster.local:80
             access: proxy
             editable: false
             jsonData:
@@ -109,7 +109,7 @@ spec:
               maxLines: 5000
           - name: Alertmanager
             type: alertmanager
-            url: http://kube-prometheus-stack-alertmanager.observability.svc:9093
+            url: http://kube-prometheus-stack-alertmanager.observability.svc.cluster.local:9093
             access: proxy
             editable: false
             jsonData:
