@@ -97,8 +97,6 @@ spec:
     # Additional arguments for API access
     additionalArguments:
       - "--api.insecure=true"
-      # Disable HTTP/2 due to connection handling issues causing timeouts
-      - "--entrypoints.websecure.http.http2.disableH2"
 
     # Logs
     logs:
