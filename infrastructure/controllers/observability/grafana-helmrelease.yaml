@@ -33,10 +33,10 @@ spec:
       userKey: admin-user
       passwordKey: admin-password
 
-    # Persistence
+    # Persistence - migrated to Synology CSI
     persistence:
       enabled: true
-      storageClassName: longhorn
+      storageClassName: synology-iscsi
       size: 10Gi
 
     # Resources

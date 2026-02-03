@@ -37,10 +37,10 @@ spec:
         cpu: 200m
         memory: 256Mi
 
-    # Persistence
+    # Persistence - migrated to Synology CSI
     persistence:
       enabled: true
-      storageClass: longhorn
+      storageClass: synology-iscsi
       size: 5Gi
 
     # Service
