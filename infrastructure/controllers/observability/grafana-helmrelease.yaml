@@ -98,7 +98,7 @@ spec:
             jsonData:
               timeInterval: 30s
               queryTimeout: 120s
-              httpMethod: POST
+              httpMethod: GET
           - name: Loki
             type: loki
             url: http://loki-gateway.observability.svc:80
