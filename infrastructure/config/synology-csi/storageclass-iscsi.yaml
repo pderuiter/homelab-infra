@@ -1,0 +1,14 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: synology-iscsi
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "false"
+provisioner: csi.san.synology.com
+parameters:
+  fsType: ext4
+  # DSM hostname/IP and location configured via CSI driver
+  protocol: iscsi
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+volumeBindingMode: Immediate

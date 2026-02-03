@@ -1,0 +1,35 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: synology-csi
+  namespace: synology-csi
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: deploy/helm
+      sourceRef:
+        kind: GitRepository
+        name: synology-csi
+        namespace: synology-csi
+      interval: 12h
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    # Client info secret created via ExternalSecret
+    clientInfoSecret:
+      name: synology-csi-client-info
+
+    # Controller settings
+    controller:
+      replicaCount: 1
+
+    # Node plugin - runs on worker nodes only
+    node:
+      nodeSelector:
+        kubernetes.io/os: linux
+      tolerations: []

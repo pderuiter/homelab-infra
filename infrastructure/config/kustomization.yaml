@@ -14,3 +14,4 @@ resources:
   - phpipam
   - eda
   - keycloak
+  - synology-csi

@@ -1,0 +1,10 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: synology-csi
+  namespace: synology-csi
+spec:
+  interval: 1h
+  url: https://github.com/SynologyOpenSource/synology-csi
+  ref:
+    branch: main
