@@ -106,6 +106,46 @@ vault policy read external-secrets-dns
 - The CA certificate in `vault-ca-configmap.yaml` must match Vault's TLS certificate
 - Verify with: `openssl s_client -connect wbyc-srv-docker01.bsdserver.lan:8200 -showcerts`
 
+### Certificate Expiration
+
+Vault TLS certificates are valid for 2 years. If certificates expire:
+
+**Symptoms:**
+- ClusterSecretStore shows `SecretStoreNotReady`
+- ExternalSecrets fail to sync with TLS errors
+
+**Resolution:**
+
+1. Check certificate expiry:
+   ```bash
+   echo | openssl s_client -connect 192.168.2.170:8200 2>/dev/null | openssl x509 -noout -dates
+   ```
+
+2. Renew certificates on all Vault hosts using Ansible:
+   ```bash
+   # Vault hosts:
+   # - wbyc-srv-docker01 (192.168.2.170)
+   # - wbyc-srv-docker02 (192.168.2.171)
+   # - wbyc-srv-docker03 (192.168.2.172)
+
+   # Reference playbook location:
+   # ~/GitHub/webuildyourcloud/automation/terraform/modules/infra-modules/terraform-vsphere-infra/ansible/roles/vault/tasks/certificates.yml
+   ```
+
+3. Restart Vault service on each host:
+   ```bash
+   sudo systemctl restart vault
+   ```
+
+4. Force ExternalSecret reconciliation:
+   ```bash
+   kubectl annotate externalsecret -A --all force-sync=$(date +%s) --overwrite
+   ```
+
+### DNS Resolution in Cluster
+
+The ClusterSecretStore uses IP address (192.168.2.170) instead of hostname to avoid DNS resolution issues. If you need to use hostnames, ensure CoreDNS can resolve `.bsdserver.lan` domains.
+
 ## Architecture
 
 ```
