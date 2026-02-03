@@ -36,7 +36,7 @@ spec:
     # Persistence - only for plugins/provisioning (DB is in PostgreSQL)
     persistence:
       enabled: true
-      storageClassName: synology-iscsi
+      storageClassName: longhorn
       size: 1Gi
 
     # Database credentials from Vault (CNPG PostgreSQL)
