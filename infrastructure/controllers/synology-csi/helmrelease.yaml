@@ -19,6 +19,35 @@ spec:
   upgrade:
     remediation:
       retries: 3
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: StatefulSet
+              name: synology-csi-controller
+            patch: |
+              - op: add
+                path: /spec/template/spec/containers/0/resources
+                value:
+                  requests:
+                    cpu: 10m
+                    memory: 128Mi
+                  limits:
+                    cpu: 100m
+                    memory: 256Mi
+          - target:
+              kind: DaemonSet
+              name: synology-csi-node
+            patch: |
+              - op: add
+                path: /spec/template/spec/containers/0/resources
+                value:
+                  requests:
+                    cpu: 5m
+                    memory: 48Mi
+                  limits:
+                    cpu: 50m
+                    memory: 96Mi
   values:
     # Client info secret created via ExternalSecret
     clientInfoSecret:
