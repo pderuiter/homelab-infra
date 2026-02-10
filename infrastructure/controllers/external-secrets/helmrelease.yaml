@@ -28,35 +28,37 @@ spec:
 
     # Controller configuration
     replicaCount: 1
+    # Performance tuning
+    concurrent: 3  # Process 3 secrets concurrently (default: 1)
     resources:
       requests:
-        cpu: 200m
-        memory: 256Mi
+        cpu: 100m
+        memory: 128Mi
       limits:
-        cpu: 2000m
-        memory: 512Mi
+        cpu: 500m
+        memory: 256Mi
 
     # Webhook configuration
     webhook:
       replicaCount: 1
       resources:
         requests:
-          cpu: 100m
-          memory: 64Mi
+          cpu: 50m
+          memory: 32Mi
         limits:
-          cpu: 1500m
-          memory: 128Mi
+          cpu: 200m
+          memory: 64Mi
 
     # Cert controller for webhook certificates
     certController:
       replicaCount: 1
       resources:
         requests:
-          cpu: 200m
-          memory: 256Mi
+          cpu: 50m
+          memory: 64Mi
         limits:
-          cpu: 2000m
-          memory: 512Mi
+          cpu: 200m
+          memory: 128Mi
 
     # Service account for Vault Kubernetes auth
     serviceAccount:
