@@ -35,11 +35,25 @@ spec:
     #   kubectl edit configmap kube-proxy -n kube-system  # set strictARP: true
     #   kubectl rollout restart daemonset kube-proxy -n kube-system
     controller:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 200m
+          memory: 128Mi
       tolerations:
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"
           effect: "NoSchedule"
     speaker:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 200m
+          memory: 128Mi
       tolerations:
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"
