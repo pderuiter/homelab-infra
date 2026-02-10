@@ -1,0 +1,91 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: kubevious
+  namespace: kubevious
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: kubevious
+      version: "1.2.1"
+      sourceRef:
+        kind: HelmRepository
+        name: kubevious
+        namespace: kubevious
+      interval: 12h
+  install:
+    crds: Create
+    remediation:
+      retries: 3
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  values:
+    # MySQL backend configuration
+    mysql:
+      persistence:
+        enabled: true
+        storageClass: longhorn
+        size: 10Gi
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+
+    # Backend configuration
+    backend:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+
+    # Parser configuration
+    parser:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+
+    # UI configuration
+    ui:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          cpu: 200m
+          memory: 256Mi
+
+    # Ingress configuration
+    ingress:
+      enabled: true
+      className: traefik
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-production
+        traefik.ingress.kubernetes.io/router.entrypoints: websecure
+        traefik.ingress.kubernetes.io/router.tls: "true"
+      hosts:
+        - host: kubevious.bsdserver.nl
+          paths:
+            - path: /
+              pathType: Prefix
+      tls:
+        - secretName: kubevious-tls
+          hosts:
+            - kubevious.bsdserver.nl
+
+    # ServiceMonitor for Prometheus
+    serviceMonitor:
+      enabled: true

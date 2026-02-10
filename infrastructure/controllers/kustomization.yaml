@@ -19,3 +19,4 @@ resources:
   - bytestash
   - web-check
   - synology-csi
+  - kubevious
