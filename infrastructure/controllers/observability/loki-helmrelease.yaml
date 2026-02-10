@@ -20,6 +20,22 @@ spec:
   upgrade:
     remediation:
       retries: 3
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: DaemonSet
+              name: loki-canary
+            patch: |
+              - op: add
+                path: /spec/template/spec/containers/0/resources
+                value:
+                  requests:
+                    cpu: 10m
+                    memory: 48Mi
+                  limits:
+                    cpu: 100m
+                    memory: 96Mi
   values:
     # Deploy in single binary mode for homelab
     deploymentMode: SingleBinary
