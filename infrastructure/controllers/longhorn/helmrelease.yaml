@@ -32,6 +32,38 @@ spec:
       nodeDownPodDeletionPolicy: delete-both-statefulset-and-deployment-pod
       # Backup target (can be configured later for NFS)
       # backupTarget: nfs://192.168.2.x:/backup/longhorn
+      # Resource limits for system-managed CSI components based on actual usage
+      systemManagedCSIComponentsResourceLimits: |
+        {
+          "csi-attacher": {
+            "requests": {"cpu": "10m", "memory": "64Mi"},
+            "limits": {"cpu": "100m", "memory": "128Mi"}
+          },
+          "csi-provisioner": {
+            "requests": {"cpu": "10m", "memory": "64Mi"},
+            "limits": {"cpu": "100m", "memory": "128Mi"}
+          },
+          "csi-resizer": {
+            "requests": {"cpu": "10m", "memory": "64Mi"},
+            "limits": {"cpu": "100m", "memory": "128Mi"}
+          },
+          "csi-snapshotter": {
+            "requests": {"cpu": "10m", "memory": "64Mi"},
+            "limits": {"cpu": "100m", "memory": "128Mi"}
+          },
+          "longhorn-csi-plugin": {
+            "requests": {"cpu": "10m", "memory": "64Mi"},
+            "limits": {"cpu": "50m", "memory": "128Mi"}
+          },
+          "node-driver-registrar": {
+            "requests": {"cpu": "5m", "memory": "32Mi"},
+            "limits": {"cpu": "50m", "memory": "64Mi"}
+          },
+          "longhorn-liveness-probe": {
+            "requests": {"cpu": "5m", "memory": "32Mi"},
+            "limits": {"cpu": "50m", "memory": "64Mi"}
+          }
+        }
 
     persistence:
       defaultClass: true
@@ -61,6 +93,14 @@ spec:
               - matchExpressions:
                   - key: node-role.kubernetes.io/control-plane
                     operator: DoesNotExist
+      # Resource limits based on actual usage: 290-311 MB memory, 30-52m CPU
+      resources:
+        requests:
+          cpu: 50m
+          memory: 256Mi
+        limits:
+          cpu: 200m
+          memory: 512Mi
 
     # CSI driver settings
     csi:
@@ -89,6 +129,14 @@ spec:
               - matchExpressions:
                   - key: node-role.kubernetes.io/control-plane
                     operator: DoesNotExist
+      # Resource limits for UI (minimal usage expected)
+      resources:
+        requests:
+          cpu: 10m
+          memory: 64Mi
+        limits:
+          cpu: 100m
+          memory: 128Mi
 
     # Metrics and ServiceMonitor for Prometheus
     metrics:
