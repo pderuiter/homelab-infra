@@ -66,7 +66,7 @@ spec:
                   key: MYSQL_ROOT_PASSWORD
       containers:
         - name: phpipam
-          image: phpipam/phpipam-www:latest
+          image: phpipam/phpipam-www:1.7x
           ports:
             - containerPort: 80
               name: http

@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: bytestash
-          image: ghcr.io/jordan-dalby/bytestash:latest
+          image: ghcr.io/jordan-dalby/bytestash:v1.5.11
           ports:
             - name: http
               containerPort: 5000

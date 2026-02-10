@@ -50,7 +50,7 @@ spec:
                     operator: DoesNotExist
       containers:
         - name: eda-ui
-          image: quay.io/ansible/eda-ui:latest
+          image: quay.io/ansible/eda-ui:2.6.5
           ports:
             - containerPort: 443
               name: https

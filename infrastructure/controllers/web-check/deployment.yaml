@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: web-check
-          image: lissy93/web-check:latest
+          image: lissy93/web-check:1.0.0
           ports:
             - name: http
               containerPort: 3000

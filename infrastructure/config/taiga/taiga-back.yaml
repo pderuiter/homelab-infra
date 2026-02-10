@@ -125,7 +125,7 @@ spec:
               memory: 32Mi
       containers:
         - name: taiga-back
-          image: taigaio/taiga-back:latest
+          image: taigaio/taiga-back:6.9.0
           ports:
             - containerPort: 8000
               name: http

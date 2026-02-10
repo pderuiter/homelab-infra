@@ -54,7 +54,7 @@ spec:
               topologyKey: kubernetes.io/hostname
       containers:
         - name: taiga-protected
-          image: taigaio/taiga-protected:latest
+          image: taigaio/taiga-protected:6.9.0
           ports:
             - containerPort: 8003
               name: http

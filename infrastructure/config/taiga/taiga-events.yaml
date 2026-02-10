@@ -65,7 +65,7 @@ spec:
               memory: 32Mi
       containers:
         - name: taiga-events
-          image: taigaio/taiga-events:latest
+          image: taigaio/taiga-events:6.9.0
           ports:
             - containerPort: 8888
               name: http

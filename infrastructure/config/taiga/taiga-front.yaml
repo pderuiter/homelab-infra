@@ -83,7 +83,7 @@ spec:
                     operator: DoesNotExist
       containers:
         - name: taiga-front
-          image: taigaio/taiga-front:latest
+          image: taigaio/taiga-front:6.9.0
           ports:
             - containerPort: 80
               name: http

@@ -53,7 +53,7 @@ spec:
               memory: 32Mi
       containers:
         - name: taiga-async
-          image: taigaio/taiga-back:latest
+          image: taigaio/taiga-back:6.9.0
           command:
             - /taiga-back/docker/async_entrypoint.sh
           env:
