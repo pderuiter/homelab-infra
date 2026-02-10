@@ -38,27 +38,15 @@ spec:
         cpu: 500m
         memory: 256Mi
 
-    # Webhook configuration
+    # Webhook configuration - DISABLED due to known performance issues
+    # The webhook validates CRDs but causes high CPU usage in interaction with cert-controller
+    # For homelab use, validation at apply-time is sufficient
     webhook:
-      replicaCount: 1
-      resources:
-        requests:
-          cpu: 50m
-          memory: 32Mi
-        limits:
-          cpu: 200m
-          memory: 64Mi
+      enabled: false
 
-    # Cert controller for webhook certificates
+    # Cert controller - DISABLED (not needed without webhook)
     certController:
-      replicaCount: 1
-      resources:
-        requests:
-          cpu: 50m
-          memory: 64Mi
-        limits:
-          cpu: 200m
-          memory: 128Mi
+      enabled: false
 
     # Service account for Vault Kubernetes auth
     serviceAccount:
