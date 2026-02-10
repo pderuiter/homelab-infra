@@ -1,0 +1,22 @@
+# Kubevious CLI Configuration for homelab-infra
+# https://github.com/kubevious/cli
+
+# Kubernetes version for API validation
+k8sVersion: "1.30.2"
+
+# Ignore non-manifest files
+ignorePatterns:
+  - "infrastructure/docker/**"
+  - "**/*.md"
+  - "**/*.txt"
+  - "**/README*"
+  - "scripts/**"
+
+# Skip rules that are too strict for homelab
+skipRules:
+  - pod-antiaffinity  # Don't require anti-affinity in small clusters
+  - pod-disruption-budget  # PDBs optional for homelab
+
+# Default options when using kubevious guard
+# Use --ignore-unknown to skip CRD validation errors
+# Use --ignore-non-k8s to skip docker-compose and other non-k8s files
