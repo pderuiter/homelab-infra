@@ -24,12 +24,26 @@ spec:
     clientInfoSecret:
       name: synology-csi-client-info
 
-    # Controller settings
+    # Controller settings - actual usage: 2m CPU, 152Mi memory
     controller:
       replicaCount: 1
+      resources:
+        requests:
+          cpu: 10m
+          memory: 128Mi
+        limits:
+          cpu: 100m
+          memory: 256Mi
 
-    # Node plugin - runs on worker nodes only
+    # Node plugin - runs on worker nodes only - actual usage: 0-1m CPU, 45-51Mi memory
     node:
       nodeSelector:
         kubernetes.io/os: linux
       tolerations: []
+      resources:
+        requests:
+          cpu: 5m
+          memory: 48Mi
+        limits:
+          cpu: 50m
+          memory: 96Mi

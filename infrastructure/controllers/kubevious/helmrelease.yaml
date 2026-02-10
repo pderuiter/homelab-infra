@@ -68,6 +68,36 @@ spec:
           cpu: 200m
           memory: 256Mi
 
+    # Collector configuration - actual usage: 323m CPU, 412Mi memory
+    collector:
+      resources:
+        requests:
+          cpu: 200m
+          memory: 384Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+
+    # Guard configuration - actual usage: 1m CPU, 38Mi memory
+    guard:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 64Mi
+        limits:
+          cpu: 100m
+          memory: 128Mi
+
+    # Redis configuration - actual usage: 15m CPU, 48Mi memory
+    redis:
+      resources:
+        requests:
+          cpu: 20m
+          memory: 64Mi
+        limits:
+          cpu: 100m
+          memory: 128Mi
+
     # Ingress configuration
     ingress:
       enabled: true
