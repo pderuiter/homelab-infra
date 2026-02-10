@@ -64,6 +64,13 @@ spec:
                 sleep 5
               done
               echo "MySQL is ready!"
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 50m
+              memory: 32Mi
       containers:
         - name: ghost
           image: ghost:6-alpine

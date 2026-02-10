@@ -61,6 +61,13 @@ spec:
           envFrom:
             - secretRef:
                 name: eda-database
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
         - name: wait-for-redis
           image: redis:7-alpine
           command:
@@ -71,6 +78,13 @@ spec:
                 echo "Waiting for Redis..."
                 sleep 2
               done
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
       containers:
         - name: eda-server
           image: quay.io/ansible/eda-server:main

@@ -44,6 +44,13 @@ spec:
                 echo "Waiting for RabbitMQ..."
                 sleep 2
               done
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 50m
+              memory: 32Mi
       containers:
         - name: taiga-async
           image: taigaio/taiga-back:latest
@@ -96,10 +103,10 @@ spec:
           resources:
             requests:
               cpu: 100m
-              memory: 256Mi
+              memory: 512Mi
             limits:
               cpu: 500m
-              memory: 512Mi
+              memory: 768Mi
           volumeMounts:
             - name: media
               mountPath: /taiga-back/media
