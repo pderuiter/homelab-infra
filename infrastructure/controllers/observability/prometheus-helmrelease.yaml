@@ -155,12 +155,24 @@ spec:
                 send_resolved: true
 
     # Node exporter
-    nodeExporter:
-      enabled: true
+    prometheus-node-exporter:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 32Mi
+        limits:
+          cpu: 200m
+          memory: 64Mi
 
     # Kube-state-metrics
-    kubeStateMetrics:
-      enabled: true
+    kube-state-metrics:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 200m
+          memory: 128Mi
 
     # Prometheus Operator
     prometheusOperator:
