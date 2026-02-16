@@ -26,7 +26,7 @@ spec:
         fsGroup: 65534
       containers:
         - name: vault-unseal
-          image: ghcr.io/lrstanley/vault-unseal:v0.7.2
+          image: ghcr.io/lrstanley/vault-unseal:0.7.2
           imagePullPolicy: Always
           env:
             - name: LOG_LEVEL
@@ -111,7 +111,7 @@ spec:
         fsGroup: 65534
       containers:
         - name: vault-unseal
-          image: ghcr.io/lrstanley/vault-unseal:v0.7.2
+          image: ghcr.io/lrstanley/vault-unseal:0.7.2
           imagePullPolicy: Always
           env:
             - name: LOG_LEVEL
@@ -196,7 +196,7 @@ spec:
         fsGroup: 65534
       containers:
         - name: vault-unseal
-          image: ghcr.io/lrstanley/vault-unseal:v0.7.2
+          image: ghcr.io/lrstanley/vault-unseal:0.7.2
           imagePullPolicy: Always
           env:
             - name: LOG_LEVEL
