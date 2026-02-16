@@ -73,16 +73,14 @@ spec:
                   - key: node-role.kubernetes.io/control-plane
                     operator: DoesNotExist
         podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 100
-              podAffinityTerm:
-                labelSelector:
-                  matchExpressions:
-                    - key: app.kubernetes.io/name
-                      operator: In
-                      values:
-                        - vault-unseal
-                topologyKey: kubernetes.io/hostname
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app.kubernetes.io/name
+                    operator: In
+                    values:
+                      - vault-unseal
+              topologyKey: kubernetes.io/hostname
 ---
 # Deployment 2: Tokens 2 & 3 (originally on docker02)
 apiVersion: apps/v1
@@ -158,16 +156,14 @@ spec:
                   - key: node-role.kubernetes.io/control-plane
                     operator: DoesNotExist
         podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 100
-              podAffinityTerm:
-                labelSelector:
-                  matchExpressions:
-                    - key: app.kubernetes.io/name
-                      operator: In
-                      values:
-                        - vault-unseal
-                topologyKey: kubernetes.io/hostname
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app.kubernetes.io/name
+                    operator: In
+                    values:
+                      - vault-unseal
+              topologyKey: kubernetes.io/hostname
 ---
 # Deployment 3: Tokens 1 & 3 (originally on docker03)
 apiVersion: apps/v1
@@ -243,13 +239,11 @@ spec:
                   - key: node-role.kubernetes.io/control-plane
                     operator: DoesNotExist
         podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 100
-              podAffinityTerm:
-                labelSelector:
-                  matchExpressions:
-                    - key: app.kubernetes.io/name
-                      operator: In
-                      values:
-                        - vault-unseal
-                topologyKey: kubernetes.io/hostname
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app.kubernetes.io/name
+                    operator: In
+                    values:
+                      - vault-unseal
+              topologyKey: kubernetes.io/hostname
