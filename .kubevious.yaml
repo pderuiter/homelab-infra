@@ -2,7 +2,7 @@
 # https://github.com/kubevious/cli
 
 # Kubernetes version for API validation
-k8sVersion: "1.30.2"
+k8sVersion: "1.34.2"
 
 # Ignore non-manifest files
 ignorePatterns:
