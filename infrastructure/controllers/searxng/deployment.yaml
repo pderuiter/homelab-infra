@@ -28,7 +28,7 @@ spec:
                     operator: DoesNotExist
       containers:
         - name: searxng
-          image: searxng/searxng:2026.2.6
+          image: searxng/searxng:2026.2.16-8e824017d
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
