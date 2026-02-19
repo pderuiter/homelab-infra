@@ -73,7 +73,7 @@ spec:
               memory: 32Mi
       containers:
         - name: ghost
-          image: ghost:6-alpine
+          image: ghost:6.19.1-alpine
           ports:
             - containerPort: 2368
               name: http
