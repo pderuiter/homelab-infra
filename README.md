@@ -2,14 +2,16 @@
 
 A production-grade, GitOps-managed Kubernetes homelab running on bare-metal nodes. All cluster state is declared in this repository and continuously reconciled by [FluxCD](https://fluxcd.io/).
 
+
 ## Why GitOps?
 
-Traditional homelab management relies on imperative commands (`kubectl apply`, `helm install`) that leave no audit trail and are impossible to reproduce reliably. This repository takes a different approach:
+Traditional management relies on imperative commands (`kubectl apply`, `helm install`) that leave no audit trail and are impossible to reproduce reliably. GitOps takes a different approach:
 
 - **Git is the single source of truth.** Every change is a commit, every rollback is a revert.
 - **FluxCD watches this repo** and reconciles the cluster state automatically. No manual `kubectl` required for deployments.
 - **Two-phase deployment ordering** ensures controllers (CRDs, operators) are healthy before dependent configuration (databases, apps, secrets) is applied.
 - **Self-healing** — if someone manually changes a resource, Flux reverts it to match Git within the reconciliation interval.
+
 
 ## Cluster Overview
 
@@ -22,6 +24,7 @@ Traditional homelab management relies on imperative commands (`kubectl apply`, `
 | **CNI** | Cilium |
 | **kube-proxy** | IPVS with `strictARP: true` (required for MetalLB L2) |
 | **API endpoint** | https://kube-api.bsdserver.nl:6443 |
+
 
 ## Repository Structure
 
@@ -103,6 +106,7 @@ Flux reconciles in two ordered phases, defined in `clusters/wbyc-k8s/infrastruct
 
 This ensures that CRDs (like `Certificate`, `ExternalSecret`, `Cluster`) exist before resources that use them are applied.
 
+
 ## Design Decisions
 
 ### Secrets: Vault + External Secrets Operator
@@ -113,6 +117,7 @@ Secrets are stored in HashiCorp Vault and synced into Kubernetes by the External
 - **25 ExternalSecrets** with 1-hour refresh intervals
 - **Webhook disabled** — ESO's validating webhook has a known bug causing ~3 CPU cores of overhead. Validation happens via kubectl/GitOps instead.
 
+
 ### Storage: Longhorn
 
 Longhorn provides replicated block storage across worker nodes. Each worker has a dedicated 150 GB disk (`/dev/sdb` or `/dev/sdc`) for Longhorn volumes. Two storage classes exist:
@@ -120,7 +125,6 @@ Longhorn provides replicated block storage across worker nodes. Each worker has 
 - `longhorn` — default, for general workloads
 - `longhorn-database` — tuned for database I/O patterns
 
-Synology CSI is deployed and functional but not actively used. It was evaluated for migrating off Longhorn but the migration was reverted.
 
 ### Networking: MetalLB + Traefik
 
@@ -130,18 +134,20 @@ On bare-metal there's no cloud load balancer, so MetalLB provides L2 LoadBalance
 - **Traefik** handles HTTP→HTTPS redirect, TLS termination, and routing
 - **kube-proxy runs in IPVS mode** with `strictARP: true` — mandatory for MetalLB L2 to work correctly. Without it, all nodes respond to ARP for LoadBalancer IPs, causing intermittent timeouts.
 
+
 ### DNS: Split-Horizon
 
 Two DNS systems serve different purposes:
 
-- **Internal (BIND via RFC2136)** — `external-dns` automatically creates DNS records on the internal BIND server (192.168.2.2) for cluster services
+- **Internal (BIND via RFC2136)** — `external-dns` automatically creates DNS records on the internal BIND server for cluster services
 - **Public (TransIP DNS-01)** — `cert-manager` uses TransIP's API to solve DNS-01 challenges for Let's Encrypt certificates
+
 
 ### Databases: CloudNative-PG
 
 PostgreSQL is managed by the CloudNative-PG operator, which handles replication, failover, and backups. Database clusters are defined in `infrastructure/config/databases/`. Grafana uses CNPG PostgreSQL instead of SQLite.
 
-### Observability: Prometheus + Grafana + Loki
+### Observability: Prometheus + Grafana + Loki + Alertmanager
 
 The full monitoring stack runs in the `observability` namespace:
 
@@ -153,21 +159,26 @@ The full monitoring stack runs in the `observability` namespace:
 
 Custom PrometheusRules monitor external-secrets sync failures, Flux reconciliation errors, certificate expiry, pod health, Longhorn volume health, and node pressure.
 
+
 ### Vault Auto-Unseal
 
 HashiCorp Vault runs outside the cluster on three Docker hosts. Three `vault-unseal` deployments run inside the cluster, each holding a different subset of unseal keys. Pod anti-affinity (required, not preferred) ensures each deployment runs on a separate worker node — if any single node goes down, the remaining two can still unseal Vault.
+
 
 ### Node Tuning
 
 A DaemonSet applies sysctl settings on every node at boot, primarily increasing `inotify` limits (`max_user_watches=524288`, `max_user_instances=512`) required by Loki, Alloy, Flux, and other file-watching components.
 
+
 ### Resource Limits
 
 Every pod has explicit resource requests and limits, sized from actual Prometheus metrics with 1.5-2x headroom for bursts. For Helm charts that don't properly template resource values, HelmRelease `postRenderers` with JSON patches are used to inject limits into rendered manifests.
 
+
 ### Image Tags
 
 All container images use specific version tags, never `:latest`. This prevents unexpected breakages from upstream changes and ensures deployments are reproducible. Version updates are explicit git commits.
+
 
 ## Manifest Validation
 
@@ -179,6 +190,7 @@ All container images use specific version tags, never `:latest`. This prevents u
 
 This checks for API syntax errors, missing references (ConfigMaps, Secrets, ServiceAccounts), label selector mismatches, and security best practices. Configuration is in `.kubevious.yaml`, targeting Kubernetes v1.34.2.
 
+
 ## Notifications
 
 | Channel | Source | Topic |
@@ -187,6 +199,7 @@ This checks for API syntax errors, missing references (ConfigMaps, Secrets, Serv
 | ntfy | Flux | `ntfy.bsdserver.nl/flux` |
 
 Flux sends reconciliation errors and Git revision updates to ntfy. Alertmanager forwards firing alerts for infrastructure issues.
+
 
 ## Common Operations
 
@@ -212,6 +225,7 @@ flux resume kustomization <name>
 ./scripts/validate-manifests.sh infrastructure/
 ```
 
+
 ## Bootstrapping
 
 To bootstrap Flux on a fresh cluster:
@@ -223,6 +237,7 @@ To bootstrap Flux on a fresh cluster:
 ```
 
 This installs the Flux CLI, runs pre-flight checks, and bootstraps the cluster to track this repository's `clusters/wbyc-k8s` path.
+
 
 ## Ansible
 
