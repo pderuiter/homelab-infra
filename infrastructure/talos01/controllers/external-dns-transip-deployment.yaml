@@ -53,6 +53,10 @@ spec:
         app: external-dns-transip
     spec:
       serviceAccountName: external-dns-transip
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       tolerations:
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"
@@ -64,6 +68,15 @@ spec:
       containers:
         - name: external-dns
           image: registry.k8s.io/external-dns/external-dns:v0.15.1
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65534
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop: ["ALL"]
           args:
             - --source=ingress
             - --source=traefik-proxy
@@ -77,7 +90,7 @@ spec:
             # Create A records pointing to the Pangolin VPS
             - --txt-owner-id=external-dns-transip
             - --txt-prefix=_externaldns-transip.
-            - --policy=sync
+            - --policy=upsert-only
             - --registry=txt
             - --log-level=info
           env:
