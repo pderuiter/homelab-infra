@@ -76,6 +76,9 @@ spec:
                   value: talos01
                 - name: ENABLE_COMPRESSION
                   value: "true"
+                # Inverted logic in talos-backup: "false" enables path-style S3 addressing
+                - name: USE_PATH_STYLE
+                  value: "false"
               resources:
                 requests:
                   cpu: 10m
