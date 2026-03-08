@@ -14,6 +14,17 @@ spec:
         name: local-path-provisioner
       interval: 12h
   values:
+    podSecurityContext:
+      runAsNonRoot: true
+    securityContext:
+      allowPrivilegeEscalation: false
+      seccompProfile:
+        type: RuntimeDefault
+      capabilities:
+        drop: ["ALL"]
+      runAsUser: 65534
+      runAsGroup: 65534
+      readOnlyRootFilesystem: true
     storageClass:
       name: local-path
       defaultClass: true
