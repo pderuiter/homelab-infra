@@ -8,6 +8,7 @@ resources:
   - ../../controllers/external-dns
   - ../../controllers/local-path-provisioner
   - ../../controllers/metrics-server
+  - ../../controllers/talos-backup
   # external-dns-transip: ExternalSecret moved to config phase (needs ESO CRDs)
   - external-dns-transip-namespace.yaml
   - external-dns-transip-deployment.yaml

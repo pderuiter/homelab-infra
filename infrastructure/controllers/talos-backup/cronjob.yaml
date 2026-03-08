@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: talos-backup
+  namespace: talos-backup
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: talos-backup
+rules:
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: talos-backup
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: talos-backup
+subjects:
+  - kind: ServiceAccount
+    name: talos-backup
+    namespace: talos-backup
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: talos-backup
+  namespace: talos-backup
+spec:
+  schedule: "0 */6 * * *"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 3
+      template:
+        spec:
+          serviceAccountName: talos-backup
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          tolerations:
+            - key: "node-role.kubernetes.io/control-plane"
+              operator: "Exists"
+              effect: "NoSchedule"
+          restartPolicy: OnFailure
+          containers:
+            - name: talos-backup
+              image: ghcr.io/siderolabs/talos-backup:v0.1.0-beta.3
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                runAsUser: 65534
+                seccompProfile:
+                  type: RuntimeDefault
+                capabilities:
+                  drop: ["ALL"]
+              envFrom:
+                - secretRef:
+                    name: talos-backup-credentials
+              env:
+                - name: BUCKET
+                  value: talos-backup
+                - name: AWS_REGION
+                  value: us-east-1
+                - name: CUSTOM_S3_ENDPOINT
+                  value: https://minio-k8s.bsdserver.nl
+                - name: CLUSTER_NAME
+                  value: talos01
+                - name: ENABLE_COMPRESSION
+                  value: "true"
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 64Mi
+                limits:
+                  cpu: 200m
+                  memory: 256Mi
