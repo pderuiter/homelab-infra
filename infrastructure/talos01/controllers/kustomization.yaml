@@ -56,6 +56,31 @@ patches:
               serviceMonitor:
                 enabled: false
 
+  # External-DNS: unique owner ID for talos01 to prevent conflicts with production cluster
+  - target:
+      kind: Deployment
+      name: external-dns
+      namespace: external-dns
+    patch: |
+      - op: replace
+        path: /spec/template/spec/containers/0/args
+        value:
+          - --source=service
+          - --source=ingress
+          - --source=traefik-proxy
+          - --traefik-disable-legacy
+          - --provider=rfc2136
+          - --rfc2136-host=192.168.2.2
+          - --rfc2136-port=53
+          - --rfc2136-zone=bsdserver.nl
+          - --rfc2136-tsig-axfr
+          - --domain-filter=bsdserver.nl
+          - --policy=upsert-only
+          - --registry=txt
+          - --txt-owner-id=external-dns-talos01
+          - --txt-prefix=_externaldns.
+          - --log-level=info
+
   # Sealed Secrets: remove control-plane exclusion, disable ServiceMonitor
   - target:
       kind: HelmRelease
