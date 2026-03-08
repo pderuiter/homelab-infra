@@ -56,7 +56,7 @@ patches:
               serviceMonitor:
                 enabled: false
 
-  # External-DNS: unique owner ID for talos01 to prevent conflicts with production cluster
+  # External-DNS: unique owner ID, upsert-only policy, PodSecurity compliance
   - target:
       kind: Deployment
       name: external-dns
@@ -80,6 +80,23 @@ patches:
           - --txt-owner-id=external-dns-talos01
           - --txt-prefix=_externaldns.
           - --log-level=info
+      - op: add
+        path: /spec/template/spec/containers/0/securityContext
+        value:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 65534
+          seccompProfile:
+            type: RuntimeDefault
+          capabilities:
+            drop: ["ALL"]
+      - op: add
+        path: /spec/template/spec/securityContext
+        value:
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
 
   # Sealed Secrets: remove control-plane exclusion, disable ServiceMonitor
   - target:
