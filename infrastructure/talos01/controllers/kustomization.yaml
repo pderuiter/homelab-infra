@@ -54,34 +54,6 @@ patches:
               serviceMonitor:
                 enabled: false
 
-  # External DNS: scale to 0 until Vault auth provides rfc2136-credentials secret
-  - target:
-      kind: Deployment
-      name: external-dns
-      namespace: external-dns
-    patch: |
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: external-dns
-        namespace: external-dns
-      spec:
-        replicas: 0
-
-  # External DNS TransIP: scale to 0 until Vault auth provides transip-credentials secret
-  - target:
-      kind: Deployment
-      name: external-dns-transip
-      namespace: external-dns-transip
-    patch: |
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: external-dns-transip
-        namespace: external-dns-transip
-      spec:
-        replicas: 0
-
   # Sealed Secrets: remove control-plane exclusion, disable ServiceMonitor
   - target:
       kind: HelmRelease
