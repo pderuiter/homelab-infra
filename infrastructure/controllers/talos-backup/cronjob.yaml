@@ -51,6 +51,11 @@ spec:
               operator: "Exists"
               effect: "NoSchedule"
           restartPolicy: OnFailure
+          volumes:
+            - name: talos-config
+              emptyDir: {}
+            - name: tmp
+              emptyDir: {}
           containers:
             - name: talos-backup
               image: ghcr.io/siderolabs/talos-backup:v0.1.0-beta.3
@@ -63,6 +68,11 @@ spec:
                   type: RuntimeDefault
                 capabilities:
                   drop: ["ALL"]
+              volumeMounts:
+                - name: talos-config
+                  mountPath: /.talos
+                - name: tmp
+                  mountPath: /tmp
               envFrom:
                 - secretRef:
                     name: talos-backup-credentials
