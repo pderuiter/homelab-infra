@@ -1,30 +1,11 @@
-apiVersion: v1
+apiVersion: talos.dev/v1alpha1
 kind: ServiceAccount
 metadata:
-  name: talos-backup
+  name: talos-backup-secrets
   namespace: talos-backup
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: talos-backup
-rules:
-  - apiGroups: [""]
-    resources: ["nodes"]
-    verbs: ["get", "list"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: talos-backup
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: talos-backup
-subjects:
-  - kind: ServiceAccount
-    name: talos-backup
-    namespace: talos-backup
+spec:
+  roles:
+    - os:etcd:backup
 ---
 apiVersion: batch/v1
 kind: CronJob
@@ -41,7 +22,6 @@ spec:
       backoffLimit: 3
       template:
         spec:
-          serviceAccountName: talos-backup
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -56,14 +36,21 @@ spec:
               emptyDir: {}
             - name: tmp
               emptyDir: {}
+            - name: talos-secrets
+              secret:
+                secretName: talos-backup-secrets
           containers:
             - name: talos-backup
               image: ghcr.io/siderolabs/talos-backup:v0.1.0-beta.3
+              workingDir: /tmp
+              command:
+                - /talos-backup
               securityContext:
                 allowPrivilegeEscalation: false
                 readOnlyRootFilesystem: true
                 runAsNonRoot: true
-                runAsUser: 65534
+                runAsUser: 1000
+                runAsGroup: 1000
                 seccompProfile:
                   type: RuntimeDefault
                 capabilities:
@@ -73,6 +60,8 @@ spec:
                   mountPath: /.talos
                 - name: tmp
                   mountPath: /tmp
+                - name: talos-secrets
+                  mountPath: /var/run/secrets/talos.dev
               envFrom:
                 - secretRef:
                     name: talos-backup-credentials
