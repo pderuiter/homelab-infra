@@ -1,0 +1,45 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../controllers/sealed-secrets
+  - ../../controllers/external-secrets
+  - ../../controllers/metallb
+  - ../../controllers/cert-manager
+  - ../../controllers/external-dns
+  - ../../controllers/external-dns-transip
+  # Traefik with cluster-specific overrides
+  - ../../controllers/traefik
+
+patches:
+  # Traefik: remove control-plane exclusion and set loadBalancerIP for talos01 pool
+  - target:
+      kind: HelmRelease
+      name: traefik
+      namespace: traefik
+    patch: |
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: traefik
+        namespace: traefik
+      spec:
+        values:
+          affinity: {}
+          service:
+            spec:
+              loadBalancerIP: 192.168.2.21
+
+  # Sealed Secrets: remove control-plane exclusion
+  - target:
+      kind: HelmRelease
+      name: sealed-secrets
+      namespace: sealed-secrets
+    patch: |
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: sealed-secrets
+        namespace: sealed-secrets
+      spec:
+        values:
+          affinity: {}
