@@ -14,10 +14,9 @@ resources:
   - traefik-helmrepository.yaml
   - traefik-helmrelease.yaml
   - traefik-api-service.yaml
-  - traefik-servicemonitor.yaml
 
 patches:
-  # Traefik: remove control-plane exclusion and set loadBalancerIP for talos01 pool
+  # Traefik: remove control-plane exclusion, set talos01 loadBalancerIP, disable metrics
   - target:
       kind: HelmRelease
       name: traefik
@@ -34,8 +33,14 @@ patches:
           service:
             spec:
               loadBalancerIP: 192.168.2.21
+          metrics:
+            prometheus:
+              service:
+                enabled: false
+              serviceMonitor:
+                enabled: false
 
-  # Sealed Secrets: remove control-plane exclusion
+  # Sealed Secrets: remove control-plane exclusion, disable ServiceMonitor
   - target:
       kind: HelmRelease
       name: sealed-secrets
@@ -49,3 +54,6 @@ patches:
       spec:
         values:
           affinity: {}
+          metrics:
+            serviceMonitor:
+              enabled: false
