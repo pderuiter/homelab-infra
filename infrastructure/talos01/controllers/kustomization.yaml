@@ -16,6 +16,20 @@ resources:
   - traefik-api-service.yaml
 
 patches:
+  # MetalLB: speaker needs privileged PodSecurity (NET_ADMIN, NET_RAW, SYS_ADMIN, hostNetwork)
+  - target:
+      kind: Namespace
+      name: metallb-system
+    patch: |
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: metallb-system
+        labels:
+          pod-security.kubernetes.io/enforce: privileged
+          pod-security.kubernetes.io/audit: privileged
+          pod-security.kubernetes.io/warn: privileged
+
   # Traefik: remove control-plane exclusion, set talos01 loadBalancerIP, disable metrics
   - target:
       kind: HelmRelease
@@ -29,7 +43,7 @@ patches:
         namespace: traefik
       spec:
         values:
-          affinity: {}
+          affinity: null
           service:
             spec:
               loadBalancerIP: 192.168.2.21
@@ -53,7 +67,7 @@ patches:
         namespace: sealed-secrets
       spec:
         values:
-          affinity: {}
+          affinity: null
           metrics:
             serviceMonitor:
               enabled: false
