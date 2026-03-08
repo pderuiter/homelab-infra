@@ -6,9 +6,15 @@ resources:
   - ../../controllers/metallb
   - ../../controllers/cert-manager
   - ../../controllers/external-dns
-  - ../../controllers/external-dns-transip
-  # Traefik with cluster-specific overrides
-  - ../../controllers/traefik
+  # external-dns-transip: ExternalSecret moved to config phase (needs ESO CRDs)
+  - external-dns-transip-namespace.yaml
+  - external-dns-transip-deployment.yaml
+  # Traefik: Certificate/IngressRoute moved to config phase (needs cert-manager/Traefik CRDs)
+  - traefik-namespace.yaml
+  - traefik-helmrepository.yaml
+  - traefik-helmrelease.yaml
+  - traefik-api-service.yaml
+  - traefik-servicemonitor.yaml
 
 patches:
   # Traefik: remove control-plane exclusion and set loadBalancerIP for talos01 pool
