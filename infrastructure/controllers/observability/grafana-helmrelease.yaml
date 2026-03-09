@@ -76,6 +76,14 @@ spec:
         secretKeyRef:
           name: grafana-database
           key: password
+      GF_AUTH_GENERIC_OAUTH_CLIENT_ID:
+        secretKeyRef:
+          name: grafana-oidc
+          key: client-id
+      GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET:
+        secretKeyRef:
+          name: grafana-oidc
+          key: client-secret
 
     # Resources
     resources:
@@ -221,6 +229,18 @@ spec:
         token_rotation_interval_minutes: 1440
         login_maximum_inactive_lifetime_duration: 30d
         login_maximum_lifetime_duration: 365d
+      # Keycloak OIDC authentication
+      auth.generic_oauth:
+        enabled: true
+        name: Keycloak
+        allow_sign_up: true
+        auto_login: false
+        scopes: openid email profile
+        auth_url: https://keycloak.bsdserver.nl/realms/homelab/protocol/openid-connect/auth
+        token_url: https://keycloak.bsdserver.nl/realms/homelab/protocol/openid-connect/token
+        api_url: https://keycloak.bsdserver.nl/realms/homelab/protocol/openid-connect/userinfo
+        role_attribute_path: "contains(realm_access.roles[*], 'admin') && 'Admin' || 'Viewer'"
+        use_pkce: true
       # Disable Grafana Live (websocket) - causes token rotation issues
       live:
         allowed_origins: ""

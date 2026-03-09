@@ -52,9 +52,19 @@ spec:
           envFrom:
             - secretRef:
                 name: minio-credentials
+            - secretRef:
+                name: minio-oidc
           env:
             - name: MINIO_PROMETHEUS_AUTH_TYPE
               value: public
+            - name: MINIO_IDENTITY_OPENID_DISPLAY_NAME
+              value: "Keycloak"
+            - name: MINIO_IDENTITY_OPENID_SCOPES
+              value: "openid,email,profile"
+            - name: MINIO_IDENTITY_OPENID_REDIRECT_URI
+              value: "https://minioadmin-tf.bsdserver.nl/oauth_callback"
+            - name: MINIO_IDENTITY_OPENID_CLAIM_NAME
+              value: "policy"
           securityContext:
             allowPrivilegeEscalation: false
             runAsNonRoot: true
