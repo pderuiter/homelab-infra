@@ -35,6 +35,32 @@ spec:
         fsGroup: 200
         seccompProfile:
           type: RuntimeDefault
+      initContainers:
+        - name: install-keycloak-plugin
+          image: busybox:1.37
+          command:
+            - sh
+            - -c
+            - |
+              PLUGIN_VERSION="0.5.0"
+              PLUGIN_URL="https://github.com/flytreeleft/nexus3-keycloak-plugin/releases/download/v${PLUGIN_VERSION}/nexus3-keycloak-plugin-${PLUGIN_VERSION}-bundle.kar"
+              if [ ! -f /nexus-data/deploy/nexus3-keycloak-plugin-${PLUGIN_VERSION}-bundle.kar ]; then
+                mkdir -p /nexus-data/deploy
+                wget -O /nexus-data/deploy/nexus3-keycloak-plugin-${PLUGIN_VERSION}-bundle.kar "$PLUGIN_URL"
+                echo "Keycloak plugin downloaded"
+              else
+                echo "Keycloak plugin already present"
+              fi
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: data
+              mountPath: /nexus-data
       containers:
         - name: nexus
           image: sonatype/nexus3:3.88.0
@@ -53,6 +79,10 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /nexus-data
+            - name: keycloak-config
+              mountPath: /opt/sonatype/nexus/etc/keycloak.json
+              subPath: keycloak.json
+              readOnly: true
           resources:
             requests:
               cpu: 100m
@@ -77,6 +107,9 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: nexus-data
+        - name: keycloak-config
+          secret:
+            secretName: nexus-keycloak
 ---
 apiVersion: v1
 kind: Service
