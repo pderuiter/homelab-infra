@@ -16,3 +16,6 @@ metadata:
 spec:
   ipAddressPools:
     - default-pool
+  # Restrict to physical interface; Cilium lxc* veths don't reach physical network
+  interfaces:
+    - ens192

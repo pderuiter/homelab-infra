@@ -1,0 +1,103 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gitea-config
+  namespace: gitea
+data:
+  app.ini: |
+    APP_NAME = We Build Your Cloud Git Server
+    RUN_USER = git
+    RUN_MODE = prod
+    WORK_PATH = /var/lib/gitea
+
+    [repository]
+    ROOT = /var/lib/gitea/git/repositories
+
+    [repository.local]
+    LOCAL_COPY_PATH = /tmp/gitea/local-repo
+
+    [repository.upload]
+    TEMP_PATH = /tmp/gitea/uploads
+
+    [server]
+    APP_DATA_PATH = /var/lib/gitea
+    SSH_DOMAIN = git.bsdserver.nl
+    HTTP_PORT = 3000
+    ROOT_URL = https://git.bsdserver.nl
+    DISABLE_SSH = false
+    START_SSH_SERVER = true
+    SSH_PORT = 2222
+    SSH_LISTEN_PORT = 2222
+    BUILTIN_SSH_SERVER_USER = git
+    LFS_START_SERVER = true
+    PROTOCOL = http
+    DOMAIN = git.bsdserver.nl
+    LFS_JWT_SECRET = iSKUTxpGYsHV_CVAJcm2CdOCrQFO2wXxiRoF880sf24
+    OFFLINE_MODE = false
+
+    [database]
+    DB_TYPE = postgres
+    HOST = gitea-postgres:5432
+    NAME = gitea
+    SSL_MODE = disable
+    LOG_SQL = false
+
+    [session]
+    PROVIDER_CONFIG = /var/lib/gitea/data/sessions
+    PROVIDER = file
+
+    [picture]
+    AVATAR_UPLOAD_PATH = /var/lib/gitea/data/avatars
+    REPOSITORY_AVATAR_UPLOAD_PATH = /var/lib/gitea/data/repo-avatars
+
+    [attachment]
+    PATH = /var/lib/gitea/data/attachments
+
+    [log]
+    ROOT_PATH = /var/lib/gitea/data/log
+    MODE = console
+    LEVEL = info
+
+    [security]
+    INSTALL_LOCK = true
+    REVERSE_PROXY_LIMIT = 1
+    REVERSE_PROXY_TRUSTED_PROXIES = *
+    INTERNAL_TOKEN = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjE3MTE4NDM1NTR9.dmS_4htcKYztfBgGmQKndL4Pb2DW1Nds0mArsCcFEcc
+    PASSWORD_HASH_ALGO = pbkdf2
+
+    [service]
+    DISABLE_REGISTRATION = true
+    REQUIRE_SIGNIN_VIEW = false
+    REGISTER_EMAIL_CONFIRM = false
+    ENABLE_NOTIFY_MAIL = false
+    ALLOW_ONLY_EXTERNAL_REGISTRATION = false
+    ENABLE_CAPTCHA = false
+    DEFAULT_KEEP_EMAIL_PRIVATE = true
+    DEFAULT_ALLOW_CREATE_ORGANIZATION = true
+    DEFAULT_ENABLE_TIMETRACKING = true
+    NO_REPLY_ADDRESS = noreply.git.bsdserver.nl
+
+    [lfs]
+    PATH = /var/lib/gitea/git/lfs
+
+    [metrics]
+    ENABLED = true
+
+    [mailer]
+    ENABLED = false
+
+    [openid]
+    ENABLE_OPENID_SIGNIN = true
+    ENABLE_OPENID_SIGNUP = false
+
+    [cron.update_checker]
+    ENABLED = false
+
+    [repository.pull-request]
+    DEFAULT_MERGE_STYLE = merge
+
+    [repository.signing]
+    DEFAULT_TRUST_MODEL = committer
+
+    [oauth2]
+    JWT_SECRET = qpo4aYAkP6p7qXACGP8vbxobjtH_VGh8tRYF4uIjYis

@@ -33,6 +33,20 @@ patches:
           pod-security.kubernetes.io/audit: privileged
           pod-security.kubernetes.io/warn: privileged
 
+  # local-path-provisioner: helper pods need privileged access for hostPath volume creation
+  - target:
+      kind: Namespace
+      name: local-path-storage
+    patch: |
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: local-path-storage
+        labels:
+          pod-security.kubernetes.io/enforce: privileged
+          pod-security.kubernetes.io/audit: privileged
+          pod-security.kubernetes.io/warn: privileged
+
   # Traefik: remove control-plane exclusion, set talos01 loadBalancerIP, disable metrics, PodSecurity
   - target:
       kind: HelmRelease
@@ -53,6 +67,11 @@ patches:
           securityContext:
             seccompProfile:
               type: RuntimeDefault
+          ports:
+            web:
+              hostPort: 80
+            websecure:
+              hostPort: 443
           service:
             spec:
               loadBalancerIP: 192.168.2.21

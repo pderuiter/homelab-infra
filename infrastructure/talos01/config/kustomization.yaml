@@ -8,6 +8,11 @@ resources:
   # CRD-dependent resources deferred from controllers phase
   - external-dns-transip-externalsecret.yaml
   - traefik-dashboard-ingressroute.yaml
+  # Applications migrated from Docker host
+  - minio
+  - keycloak
+  - gitea
+  - nexus
 
 patches:
   # Use talos01-specific Vault auth path
