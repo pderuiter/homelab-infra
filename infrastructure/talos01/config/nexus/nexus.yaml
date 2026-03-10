@@ -43,14 +43,18 @@ spec:
             - -c
             - |
               PLUGIN_VERSION="0.5.0"
-              PLUGIN_URL="https://github.com/flytreeleft/nexus3-keycloak-plugin/releases/download/v${PLUGIN_VERSION}/nexus3-keycloak-plugin-${PLUGIN_VERSION}-bundle.kar"
-              if [ ! -f /nexus-data/deploy/nexus3-keycloak-plugin-${PLUGIN_VERSION}-bundle.kar ]; then
-                mkdir -p /nexus-data/deploy
-                wget -O /nexus-data/deploy/nexus3-keycloak-plugin-${PLUGIN_VERSION}-bundle.kar "$PLUGIN_URL"
+              PLUGIN_FILE="nexus3-keycloak-plugin-${PLUGIN_VERSION}-bundle.kar"
+              PLUGIN_URL="https://github.com/flytreeleft/nexus3-keycloak-plugin/releases/download/v${PLUGIN_VERSION}/${PLUGIN_FILE}"
+              # Cache in persistent storage, copy to deploy volume
+              if [ ! -f /nexus-data/keycloak-plugin/${PLUGIN_FILE} ]; then
+                mkdir -p /nexus-data/keycloak-plugin
+                wget -O /nexus-data/keycloak-plugin/${PLUGIN_FILE} "$PLUGIN_URL"
                 echo "Keycloak plugin downloaded"
               else
-                echo "Keycloak plugin already present"
+                echo "Keycloak plugin already cached"
               fi
+              cp /nexus-data/keycloak-plugin/${PLUGIN_FILE} /deploy/${PLUGIN_FILE}
+              echo "Keycloak plugin copied to deploy directory"
           securityContext:
             allowPrivilegeEscalation: false
             runAsNonRoot: true
@@ -61,6 +65,8 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /nexus-data
+            - name: deploy
+              mountPath: /deploy
       containers:
         - name: nexus
           image: sonatype/nexus3:3.88.0
@@ -79,6 +85,8 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /nexus-data
+            - name: deploy
+              mountPath: /opt/sonatype/nexus/deploy
             - name: keycloak-config
               mountPath: /opt/sonatype/nexus/etc/keycloak.json
               subPath: keycloak.json
@@ -107,6 +115,8 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: nexus-data
+        - name: deploy
+          emptyDir: {}
         - name: keycloak-config
           secret:
             secretName: nexus-keycloak
