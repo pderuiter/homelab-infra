@@ -35,26 +35,43 @@ spec:
         fsGroup: 200
         seccompProfile:
           type: RuntimeDefault
-      initContainers:
-        - name: install-keycloak-plugin
-          image: busybox:1.37
-          command:
-            - sh
-            - -c
-            - |
-              PLUGIN_VERSION="0.5.0"
-              PLUGIN_FILE="nexus3-keycloak-plugin-${PLUGIN_VERSION}-bundle.kar"
-              PLUGIN_URL="https://github.com/flytreeleft/nexus3-keycloak-plugin/releases/download/v${PLUGIN_VERSION}/${PLUGIN_FILE}"
-              # Cache in persistent storage, copy to deploy volume
-              if [ ! -f /nexus-data/keycloak-plugin/${PLUGIN_FILE} ]; then
-                mkdir -p /nexus-data/keycloak-plugin
-                wget -O /nexus-data/keycloak-plugin/${PLUGIN_FILE} "$PLUGIN_URL"
-                echo "Keycloak plugin downloaded"
-              else
-                echo "Keycloak plugin already cached"
-              fi
-              cp /nexus-data/keycloak-plugin/${PLUGIN_FILE} /deploy/${PLUGIN_FILE}
-              echo "Keycloak plugin copied to deploy directory"
+      containers:
+        - name: oauth2-proxy
+          image: quay.io/oauth2-proxy/oauth2-proxy:v7.7.1
+          args:
+            - --http-address=0.0.0.0:4180
+            - --upstream=http://localhost:8081
+            - --provider=oidc
+            - --oidc-issuer-url=https://keycloak.bsdserver.nl/realms/homelab
+            - --email-domain=*
+            - --cookie-secure=true
+            - --cookie-name=_nexus_oauth2
+            - --cookie-samesite=lax
+            - --redirect-url=https://nexus.bsdserver.nl/oauth2/callback
+            - --pass-access-token=false
+            - --pass-user-headers=true
+            - --set-xauthrequest=true
+            - --skip-provider-button=false
+            - --scope=openid email profile
+          env:
+            - name: OAUTH2_PROXY_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: nexus-keycloak
+                  key: client-id
+            - name: OAUTH2_PROXY_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: nexus-keycloak
+                  key: client-secret
+            - name: OAUTH2_PROXY_COOKIE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: nexus-keycloak
+                  key: cookie-secret
+          ports:
+            - name: proxy
+              containerPort: 4180
           securityContext:
             allowPrivilegeEscalation: false
             runAsNonRoot: true
@@ -62,12 +79,23 @@ spec:
               type: RuntimeDefault
             capabilities:
               drop: ["ALL"]
-          volumeMounts:
-            - name: data
-              mountPath: /nexus-data
-            - name: deploy
-              mountPath: /deploy
-      containers:
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: proxy
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: proxy
+            periodSeconds: 15
         - name: nexus
           image: sonatype/nexus3:3.88.0
           ports:
@@ -85,12 +113,6 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /nexus-data
-            - name: deploy
-              mountPath: /opt/sonatype/nexus/deploy
-            - name: keycloak-config
-              mountPath: /opt/sonatype/nexus/etc/keycloak.json
-              subPath: keycloak.json
-              readOnly: true
           resources:
             requests:
               cpu: 100m
@@ -115,11 +137,6 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: nexus-data
-        - name: deploy
-          emptyDir: {}
-        - name: keycloak-config
-          secret:
-            secretName: nexus-keycloak
 ---
 apiVersion: v1
 kind: Service
@@ -132,4 +149,4 @@ spec:
   ports:
     - name: http
       port: 8081
-      targetPort: http
+      targetPort: proxy
