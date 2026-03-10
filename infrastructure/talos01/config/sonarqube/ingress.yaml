@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sonarqube
+  namespace: sonarqube
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
+    external-dns.alpha.kubernetes.io/target: "192.168.2.20"
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - sonarqube.bsdserver.nl
+      secretName: sonarqube-tls
+  rules:
+    - host: sonarqube.bsdserver.nl
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: sonarqube
+                port:
+                  number: 9000

@@ -13,6 +13,7 @@ resources:
   - keycloak
   - gitea
   - nexus
+  - sonarqube
 
 patches:
   # Use talos01-specific Vault auth path
