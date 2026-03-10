@@ -36,67 +36,6 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       containers:
-        - name: oauth2-proxy
-          image: quay.io/oauth2-proxy/oauth2-proxy:v7.7.1
-          args:
-            - --http-address=0.0.0.0:4180
-            - --upstream=http://localhost:8081
-            - --provider=oidc
-            - --oidc-issuer-url=https://keycloak.bsdserver.nl/realms/homelab
-            - --email-domain=*
-            - --cookie-secure=true
-            - --cookie-name=_nexus_oauth2
-            - --cookie-samesite=lax
-            - --redirect-url=https://nexus.bsdserver.nl/oauth2/callback
-            - --pass-access-token=false
-            - --pass-user-headers=true
-            - --set-xauthrequest=true
-            - --skip-provider-button=true
-            - --oidc-email-claim=preferred_username
-            - --scope=openid email profile
-          env:
-            - name: OAUTH2_PROXY_CLIENT_ID
-              valueFrom:
-                secretKeyRef:
-                  name: nexus-keycloak
-                  key: client-id
-            - name: OAUTH2_PROXY_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: nexus-keycloak
-                  key: client-secret
-            - name: OAUTH2_PROXY_COOKIE_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: nexus-keycloak
-                  key: cookie-secret
-          ports:
-            - name: proxy
-              containerPort: 4180
-          securityContext:
-            allowPrivilegeEscalation: false
-            runAsNonRoot: true
-            seccompProfile:
-              type: RuntimeDefault
-            capabilities:
-              drop: ["ALL"]
-          resources:
-            requests:
-              cpu: 10m
-              memory: 32Mi
-            limits:
-              cpu: 100m
-              memory: 64Mi
-          livenessProbe:
-            httpGet:
-              path: /ping
-              port: proxy
-            periodSeconds: 30
-          readinessProbe:
-            httpGet:
-              path: /ping
-              port: proxy
-            periodSeconds: 15
         - name: nexus
           image: sonatype/nexus3:3.88.0
           ports:
@@ -150,4 +89,4 @@ spec:
   ports:
     - name: http
       port: 8081
-      targetPort: proxy
+      targetPort: http
