@@ -10,7 +10,7 @@ resources:
   - homelab-dashboard
   - listmonk
   - taiga
-  - sonarqube
+  # sonarqube: migrated to talos01 cluster (2026-03-10)
   - phpipam
   - eda
   # keycloak: migrated to talos01 cluster (2026-03-09)
