@@ -51,7 +51,8 @@ spec:
             - --pass-access-token=false
             - --pass-user-headers=true
             - --set-xauthrequest=true
-            - --skip-provider-button=false
+            - --skip-provider-button=true
+            - --preferred-username-claim=preferred_username
             - --scope=openid email profile
           env:
             - name: OAUTH2_PROXY_CLIENT_ID
