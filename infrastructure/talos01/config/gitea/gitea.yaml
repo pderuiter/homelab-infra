@@ -79,6 +79,7 @@ spec:
               containerPort: 3000
             - name: ssh
               containerPort: 2222
+              hostPort: 2222
           envFrom:
             - secretRef:
                 name: gitea-credentials
@@ -153,22 +154,6 @@ spec:
     - name: http
       port: 3000
       targetPort: http
-    - name: ssh
-      port: 2222
-      targetPort: ssh
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: gitea-ssh
-  namespace: gitea
-  annotations:
-    metallb.universe.tf/loadBalancerIPs: "192.168.2.22"
-spec:
-  type: LoadBalancer
-  selector:
-    app: gitea
-  ports:
     - name: ssh
       port: 2222
       targetPort: ssh
