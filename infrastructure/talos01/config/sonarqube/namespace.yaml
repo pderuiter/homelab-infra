@@ -4,3 +4,6 @@ metadata:
   name: sonarqube
   labels:
     app.kubernetes.io/name: sonarqube
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted

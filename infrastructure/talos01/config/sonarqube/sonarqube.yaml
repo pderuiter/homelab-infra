@@ -42,9 +42,6 @@ spec:
         app.kubernetes.io/name: sonarqube
     spec:
       securityContext:
-        runAsNonRoot: true
-        runAsUser: 1000
-        runAsGroup: 0
         fsGroup: 0
         seccompProfile:
           type: RuntimeDefault
@@ -73,11 +70,8 @@ spec:
             - name: SONAR_ES_BOOTSTRAP_CHECKS_DISABLE
               value: "true"
           securityContext:
-            allowPrivilegeEscalation: false
             seccompProfile:
               type: RuntimeDefault
-            capabilities:
-              drop: ["ALL"]
           volumeMounts:
             - name: data
               mountPath: /opt/sonarqube/data
