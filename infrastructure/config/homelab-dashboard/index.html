@@ -719,71 +719,66 @@
     </div>
 
     <script>
-        const PROMETHEUS_URL = '/api/prometheus';
-
-        async function queryPrometheus(query) {
+        function extractValue(promResponse) {
             try {
-                const response = await fetch(`${PROMETHEUS_URL}/api/v1/query?query=${encodeURIComponent(query)}`);
-                const data = await response.json();
-                if (data.status === 'success' && data.data.result.length > 0) {
-                    return data.data.result;
+                if (promResponse && promResponse.status === 'success' && promResponse.data.result.length > 0) {
+                    return parseFloat(promResponse.data.result[0].value[1]);
                 }
-                return null;
-            } catch (error) {
-                console.error('Prometheus query failed:', error);
-                return null;
-            }
+            } catch (e) {}
+            return null;
         }
 
         async function updateMetrics() {
-            // CPU Usage (average across nodes)
-            const cpuResult = await queryPrometheus('100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)');
-            if (cpuResult) {
-                const cpuValue = parseFloat(cpuResult[0].value[1]).toFixed(1);
-                document.getElementById('cpu-usage').textContent = cpuValue + '%';
-            }
+            try {
+                const response = await fetch('/metrics.json');
+                if (!response.ok) return;
+                const metrics = await response.json();
 
-            // Memory Usage
-            const memUsedResult = await queryPrometheus('sum(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes)');
-            const memTotalResult = await queryPrometheus('sum(node_memory_MemTotal_bytes)');
-            if (memUsedResult && memTotalResult) {
-                const memUsed = parseFloat(memUsedResult[0].value[1]);
-                const memTotal = parseFloat(memTotalResult[0].value[1]);
-                const memPercent = ((memUsed / memTotal) * 100).toFixed(1);
-                const memUsedGB = (memUsed / 1024 / 1024 / 1024).toFixed(1);
-                const memTotalGB = (memTotal / 1024 / 1024 / 1024).toFixed(0);
-                document.getElementById('memory-usage').textContent = memPercent + '%';
-                document.getElementById('memory-detail').textContent = `${memUsedGB} / ${memTotalGB} GB`;
-            }
-
-            // Pod Count
-            const podResult = await queryPrometheus('sum(kubelet_running_pods)');
-            if (podResult) {
-                document.getElementById('pod-count').textContent = Math.round(parseFloat(podResult[0].value[1]));
-            }
-
-            // Ingress Count (count of ingress rules)
-            const ingressResult = await queryPrometheus('count(traefik_router_requests_total)');
-            if (ingressResult) {
-                document.getElementById('ingress-count').textContent = Math.round(parseFloat(ingressResult[0].value[1]));
-            } else {
-                // Fallback: try counting services
-                const svcResult = await queryPrometheus('count(kube_service_info)');
-                if (svcResult) {
-                    document.getElementById('ingress-count').textContent = Math.round(parseFloat(svcResult[0].value[1]));
+                // CPU Usage
+                const cpuVal = extractValue(metrics.cpu);
+                if (cpuVal !== null) {
+                    document.getElementById('cpu-usage').textContent = cpuVal.toFixed(1) + '%';
                 }
-            }
 
-            // Storage Usage (Longhorn)
-            const storageUsedResult = await queryPrometheus('sum(longhorn_volume_actual_size_bytes)');
-            const storageTotalResult = await queryPrometheus('sum(longhorn_node_storage_capacity_bytes)');
-            if (storageUsedResult && storageTotalResult) {
-                const storageUsed = parseFloat(storageUsedResult[0].value[1]);
-                const storageTotal = parseFloat(storageTotalResult[0].value[1]);
-                const storageUsedGB = (storageUsed / 1024 / 1024 / 1024).toFixed(0);
-                const storageTotalGB = (storageTotal / 1024 / 1024 / 1024).toFixed(0);
-                document.getElementById('storage-usage').textContent = storageUsedGB + ' GB';
-                document.getElementById('storage-detail').textContent = `${storageUsedGB} / ${storageTotalGB} GB used`;
+                // Memory Usage
+                const memUsed = extractValue(metrics.memory_used);
+                const memTotal = extractValue(metrics.memory_total);
+                if (memUsed !== null && memTotal !== null) {
+                    const memPercent = ((memUsed / memTotal) * 100).toFixed(1);
+                    const memUsedGB = (memUsed / 1024 / 1024 / 1024).toFixed(1);
+                    const memTotalGB = (memTotal / 1024 / 1024 / 1024).toFixed(0);
+                    document.getElementById('memory-usage').textContent = memPercent + '%';
+                    document.getElementById('memory-detail').textContent = `${memUsedGB} / ${memTotalGB} GB`;
+                }
+
+                // Pod Count
+                const pods = extractValue(metrics.pods);
+                if (pods !== null) {
+                    document.getElementById('pod-count').textContent = Math.round(pods);
+                }
+
+                // Ingress Count
+                const ingress = extractValue(metrics.ingress);
+                if (ingress !== null) {
+                    document.getElementById('ingress-count').textContent = Math.round(ingress);
+                } else {
+                    const svc = extractValue(metrics.services);
+                    if (svc !== null) {
+                        document.getElementById('ingress-count').textContent = Math.round(svc);
+                    }
+                }
+
+                // Storage Usage
+                const storUsed = extractValue(metrics.storage_used);
+                const storTotal = extractValue(metrics.storage_total);
+                if (storUsed !== null && storTotal !== null) {
+                    const storUsedGB = (storUsed / 1024 / 1024 / 1024).toFixed(0);
+                    const storTotalGB = (storTotal / 1024 / 1024 / 1024).toFixed(0);
+                    document.getElementById('storage-usage').textContent = storUsedGB + ' GB';
+                    document.getElementById('storage-detail').textContent = `${storUsedGB} / ${storTotalGB} GB used`;
+                }
+            } catch (error) {
+                console.error('Failed to load metrics:', error);
             }
         }
 

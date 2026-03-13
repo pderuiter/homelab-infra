@@ -20,6 +20,21 @@ spec:
         runAsUser: 101
         runAsGroup: 101
         fsGroup: 101
+      initContainers:
+        - name: copy-html
+          image: busybox:1.37
+          command: ["sh", "-c", "cp /html-source/* /usr/share/nginx/html/"]
+          volumeMounts:
+            - name: html-source
+              mountPath: /html-source
+            - name: html-content
+              mountPath: /usr/share/nginx/html
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
       containers:
         - name: nginx
           image: nginx:1.27-alpine
@@ -63,13 +78,55 @@ spec:
             capabilities:
               drop:
                 - ALL
+        - name: metrics-collector
+          image: busybox:1.37
+          command: ["sh", "-c"]
+          args:
+            - |
+              PROM="http://kube-prometheus-stack-prometheus.observability.svc:9090/api/v1/query"
+              OUT="/usr/share/nginx/html/metrics.json"
+              q() { wget -qO- "${PROM}?query=$(echo "$1" | sed 's/ /%20/g;s/\[/%5B/g;s/\]/%5D/g;s/{/%7B/g;s/}/%7D/g;s/"/%22/g')" 2>/dev/null || echo "null"; }
+              while true; do
+                cpu=$(q '100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)')
+                mem_used=$(q 'sum(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes)')
+                mem_total=$(q 'sum(node_memory_MemTotal_bytes)')
+                pods=$(q 'sum(kubelet_running_pods)')
+                ingress=$(q 'count(traefik_router_requests_total)')
+                svc=$(q 'count(kube_service_info)')
+                stor_used=$(q 'sum(longhorn_volume_actual_size_bytes)')
+                stor_total=$(q 'sum(longhorn_node_storage_capacity_bytes)')
+                printf '{"timestamp":"%s","cpu":%s,"memory_used":%s,"memory_total":%s,"pods":%s,"ingress":%s,"services":%s,"storage_used":%s,"storage_total":%s}\n' \
+                  "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+                  "$cpu" "$mem_used" "$mem_total" "$pods" "$ingress" "$svc" "$stor_used" "$stor_total" \
+                  > "${OUT}.tmp"
+                mv "${OUT}.tmp" "$OUT"
+                sleep 30
+              done
+          volumeMounts:
+            - name: html-content
+              mountPath: /usr/share/nginx/html
+          resources:
+            requests:
+              cpu: 5m
+              memory: 16Mi
+            limits:
+              cpu: 50m
+              memory: 32Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
       volumes:
         - name: nginx-config
           configMap:
             name: nginx-config
-        - name: html-content
+        - name: html-source
           configMap:
             name: html-content
+        - name: html-content
+          emptyDir: {}
         - name: tmp
           emptyDir: {}
         - name: cache
