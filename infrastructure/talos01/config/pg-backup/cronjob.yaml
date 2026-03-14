@@ -1,0 +1,116 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: pg-backup
+  namespace: pg-backup
+spec:
+  schedule: "0 2 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 1800
+      template:
+        spec:
+          securityContext:
+            seccompProfile:
+              type: RuntimeDefault
+          restartPolicy: OnFailure
+          containers:
+            - name: pg-backup
+              image: bitnami/postgresql:16
+              command: ["sh", "-c"]
+              args:
+                - |
+                  set -e
+                  DATE=$(date -u +%Y-%m-%dT%H%M%SZ)
+                  BUCKET="pg-backups"
+                  MINIO_URL="http://minio.minio.svc:9000"
+                  FAILED=0
+
+                  # Install mc (MinIO client)
+                  curl -sSL https://dl.min.io/client/mc/release/linux-amd64/mc -o /tmp/mc
+                  chmod +x /tmp/mc
+                  /tmp/mc alias set backup "$MINIO_URL" "$MINIO_ACCESS_KEY" "$MINIO_SECRET_KEY" --api S3v4
+
+                  # Ensure bucket exists with 14-day lifecycle
+                  /tmp/mc mb --ignore-existing "backup/$BUCKET"
+                  /tmp/mc ilm rule add "backup/$BUCKET" --expire-days 14
+
+                  # Backup each database
+                  for DB_SPEC in "gitea:gitea-postgres.gitea.svc:gitea:GITEA" \
+                                 "keycloak:keycloak-postgres.keycloak.svc:keycloack:KEYCLOAK" \
+                                 "sonarqube:sonarqube-postgres.sonarqube.svc:sonarqube:SONARQUBE"; do
+                    DB_NAME=$(echo "$DB_SPEC" | cut -d: -f1)
+                    DB_HOST=$(echo "$DB_SPEC" | cut -d: -f2)
+                    DB_USER=$(echo "$DB_SPEC" | cut -d: -f3)
+                    DB_LABEL=$(echo "$DB_SPEC" | cut -d: -f4)
+
+                    DUMP_FILE="/tmp/${DB_NAME}-${DATE}.sql.gz"
+                    echo "=== Backing up $DB_NAME from $DB_HOST as $DB_USER ==="
+
+                    if PGPASSWORD="$( eval echo \$${DB_LABEL}_DB_PASSWORD )" \
+                       pg_dump -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" \
+                       --no-owner --no-privileges | gzip > "$DUMP_FILE"; then
+                      SIZE=$(du -h "$DUMP_FILE" | cut -f1)
+                      echo "Dump complete: $SIZE"
+
+                      if /tmp/mc cp "$DUMP_FILE" "backup/$BUCKET/$DB_NAME/$DB_NAME-${DATE}.sql.gz"; then
+                        echo "Uploaded to MinIO: $BUCKET/$DB_NAME/$DB_NAME-${DATE}.sql.gz"
+                      else
+                        echo "ERROR: Failed to upload $DB_NAME to MinIO"
+                        FAILED=1
+                      fi
+                    else
+                      echo "ERROR: pg_dump failed for $DB_NAME"
+                      FAILED=1
+                    fi
+
+                    rm -f "$DUMP_FILE"
+                  done
+
+                  if [ "$FAILED" -eq 1 ]; then
+                    echo "One or more backups failed!"
+                    exit 1
+                  fi
+                  echo "All backups completed successfully"
+              env:
+                - name: MINIO_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: pg-backup-minio-credentials
+                      key: MINIO_ACCESS_KEY
+                - name: MINIO_SECRET_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: pg-backup-minio-credentials
+                      key: MINIO_SECRET_KEY
+                - name: GITEA_DB_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: gitea-db-password
+                      key: password
+                - name: KEYCLOAK_DB_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: keycloak-db-password
+                      key: password
+                - name: SONARQUBE_DB_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: sonarqube-db-password
+                      key: password
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+                limits:
+                  cpu: 500m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL

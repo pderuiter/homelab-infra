@@ -31,6 +31,32 @@ spec:
       securityContext:
         seccompProfile:
           type: RuntimeDefault
+      initContainers:
+        - name: verify-persistent-storage
+          image: busybox:1.37
+          command: ["sh", "-c"]
+          args:
+            - |
+              echo "Verifying persistent storage mount..."
+              MOUNT_DEV=$(df /data | tail -1 | awk '{print $1}')
+              echo "Mount device: $MOUNT_DEV"
+              if echo "$MOUNT_DEV" | grep -q "overlay"; then
+                echo "FATAL: /data is on overlay filesystem, NOT persistent storage!"
+                echo "PVC mount has failed. Refusing to start to prevent data loss."
+                exit 1
+              fi
+              echo "Storage verification passed: $MOUNT_DEV"
+              mkdir -p /data/pgdata
+              chown 999:999 /data/pgdata
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          securityContext:
+            runAsUser: 0
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
       containers:
         - name: postgres
           image: postgres:16.2
@@ -39,6 +65,8 @@ spec:
           env:
             - name: POSTGRES_DB
               value: keycloak
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
           envFrom:
             - secretRef:
                 name: keycloak-postgres-credentials
@@ -48,7 +76,6 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /var/lib/postgresql/data
-              subPath: pgdata
           resources:
             requests:
               cpu: 50m

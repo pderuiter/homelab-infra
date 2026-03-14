@@ -15,6 +15,7 @@ resources:
   - nexus
   - sonarqube
   - netbird
+  - pg-backup
 
 patches:
   # Use talos01-specific Vault auth path
