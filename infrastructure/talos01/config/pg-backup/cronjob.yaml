@@ -18,9 +18,35 @@ spec:
             seccompProfile:
               type: RuntimeDefault
           restartPolicy: OnFailure
+          initContainers:
+            - name: download-mc
+              image: busybox:1.37
+              command: ["sh", "-c"]
+              args:
+                - |
+                  wget -qO /tools/mc https://dl.min.io/client/mc/release/linux-amd64/mc
+                  chmod +x /tools/mc
+                  echo "mc downloaded successfully"
+              volumeMounts:
+                - name: tools
+                  mountPath: /tools
+              securityContext:
+                allowPrivilegeEscalation: false
+                runAsNonRoot: true
+                runAsUser: 1000
+                capabilities:
+                  drop:
+                    - ALL
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  cpu: 100m
+                  memory: 64Mi
           containers:
             - name: pg-backup
-              image: bitnami/postgresql:16
+              image: postgres:16.1
               command: ["sh", "-c"]
               args:
                 - |
@@ -30,14 +56,12 @@ spec:
                   MINIO_URL="http://minio.minio.svc:9000"
                   FAILED=0
 
-                  # Install mc (MinIO client)
-                  curl -sSL https://dl.min.io/client/mc/release/linux-amd64/mc -o /tmp/mc
-                  chmod +x /tmp/mc
-                  /tmp/mc alias set backup "$MINIO_URL" "$MINIO_ACCESS_KEY" "$MINIO_SECRET_KEY" --api S3v4
+                  # Configure mc (MinIO client, downloaded by init container)
+                  MC=/tools/mc
+                  $MC alias set backup "$MINIO_URL" "$MINIO_ACCESS_KEY" "$MINIO_SECRET_KEY" --api S3v4
 
-                  # Ensure bucket exists with 14-day lifecycle
-                  /tmp/mc mb --ignore-existing "backup/$BUCKET"
-                  /tmp/mc ilm rule add "backup/$BUCKET" --expire-days 14
+                  # Verify bucket access (bucket pre-created by admin)
+                  $MC ls "backup/$BUCKET" > /dev/null
 
                   # Backup each database
                   for DB_SPEC in "gitea:gitea-postgres.gitea.svc:gitea:GITEA" \
@@ -57,7 +81,7 @@ spec:
                       SIZE=$(du -h "$DUMP_FILE" | cut -f1)
                       echo "Dump complete: $SIZE"
 
-                      if /tmp/mc cp "$DUMP_FILE" "backup/$BUCKET/$DB_NAME/$DB_NAME-${DATE}.sql.gz"; then
+                      if $MC cp "$DUMP_FILE" "backup/$BUCKET/$DB_NAME/$DB_NAME-${DATE}.sql.gz"; then
                         echo "Uploaded to MinIO: $BUCKET/$DB_NAME/$DB_NAME-${DATE}.sql.gz"
                       else
                         echo "ERROR: Failed to upload $DB_NAME to MinIO"
@@ -102,6 +126,10 @@ spec:
                     secretKeyRef:
                       name: sonarqube-db-password
                       key: password
+              volumeMounts:
+                - name: tools
+                  mountPath: /tools
+                  readOnly: true
               resources:
                 requests:
                   cpu: 50m
@@ -114,3 +142,6 @@ spec:
                 capabilities:
                   drop:
                     - ALL
+          volumes:
+            - name: tools
+              emptyDir: {}

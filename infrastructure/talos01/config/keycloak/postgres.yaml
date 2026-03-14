@@ -53,10 +53,15 @@ spec:
               mountPath: /data
           securityContext:
             runAsUser: 0
+            runAsNonRoot: false
             allowPrivilegeEscalation: false
             capabilities:
               drop:
                 - ALL
+              add:
+                - CHOWN
+                - DAC_OVERRIDE
+                - FOWNER
       containers:
         - name: postgres
           image: postgres:16.2
