@@ -1,0 +1,166 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: gitea-backup
+  namespace: gitea-backup
+spec:
+  schedule: "0 3 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 3600
+      template:
+        spec:
+          restartPolicy: OnFailure
+          initContainers:
+            - name: download-mc
+              image: alpine:3.21
+              command: ["sh", "-c"]
+              args:
+                - |
+                  apk add --no-cache ca-certificates > /dev/null 2>&1
+                  wget -qO /tools/mc https://dl.min.io/client/mc/release/linux-amd64/mc
+                  chmod +x /tools/mc
+                  cp -a /etc/ssl/certs /tools/ssl-certs
+                  echo "mc and CA certificates prepared"
+              volumeMounts:
+                - name: tools
+                  mountPath: /tools
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  cpu: 100m
+                  memory: 64Mi
+          containers:
+            - name: gitea-backup
+              image: postgres:16.1
+              command: ["sh", "-c"]
+              args:
+                - |
+                  set -e
+                  DATE=$(date -u +%Y-%m-%dT%H%M%SZ)
+                  BUCKET="gitea-backup"
+                  GARAGE_URL="https://backups.bsdserver.nl"
+                  FAILED=0
+
+                  # Configure mc
+                  MC=/tools/mc
+                  $MC alias set garage "$GARAGE_URL" "$GARAGE_ACCESS_KEY" "$GARAGE_SECRET_KEY" --api S3v4
+
+                  # Verify bucket access
+                  $MC ls "garage/$BUCKET" > /dev/null
+                  echo "=== Garage S3 connection verified ==="
+
+                  # --- 1. Backup PostgreSQL database ---
+                  echo "=== Backing up Gitea PostgreSQL database ==="
+                  DUMP_FILE="/tmp/gitea-db-${DATE}.sql.gz"
+                  if PGPASSWORD="$GITEA_DB_PASSWORD" \
+                     pg_dump -h gitea-postgres.gitea.svc -U gitea -d gitea \
+                     --no-owner --no-privileges | gzip > "$DUMP_FILE"; then
+                    SIZE=$(du -h "$DUMP_FILE" | cut -f1)
+                    echo "Database dump complete: $SIZE"
+                    if $MC cp "$DUMP_FILE" "garage/$BUCKET/db/gitea-db-${DATE}.sql.gz"; then
+                      echo "Uploaded database dump to Garage"
+                    else
+                      echo "ERROR: Failed to upload database dump"
+                      FAILED=1
+                    fi
+                  else
+                    echo "ERROR: pg_dump failed for Gitea"
+                    FAILED=1
+                  fi
+                  rm -f "$DUMP_FILE"
+
+                  # --- 2. Backup Git repositories ---
+                  echo "=== Backing up Git repositories ==="
+                  REPOS_FILE="/tmp/gitea-repos-${DATE}.tar.gz"
+                  if tar czf "$REPOS_FILE" -C /gitea-data/git repositories 2>/dev/null; then
+                    SIZE=$(du -h "$REPOS_FILE" | cut -f1)
+                    echo "Repositories archive complete: $SIZE"
+                    if $MC cp "$REPOS_FILE" "garage/$BUCKET/repos/gitea-repos-${DATE}.tar.gz"; then
+                      echo "Uploaded repositories archive to Garage"
+                    else
+                      echo "ERROR: Failed to upload repositories archive"
+                      FAILED=1
+                    fi
+                  else
+                    echo "ERROR: Failed to create repositories archive"
+                    FAILED=1
+                  fi
+                  rm -f "$REPOS_FILE"
+
+                  # --- 3. Backup Gitea data (LFS, attachments, avatars, etc.) ---
+                  echo "=== Backing up Gitea data ==="
+                  DATA_FILE="/tmp/gitea-data-${DATE}.tar.gz"
+                  if tar czf "$DATA_FILE" \
+                    -C /gitea-data \
+                    --exclude='git/repositories' \
+                    --exclude='queues' \
+                    --exclude='indexers' \
+                    --exclude='tmp' \
+                    --exclude='ssh' \
+                    . 2>/dev/null; then
+                    SIZE=$(du -h "$DATA_FILE" | cut -f1)
+                    echo "Data archive complete: $SIZE"
+                    if $MC cp "$DATA_FILE" "garage/$BUCKET/data/gitea-data-${DATE}.tar.gz"; then
+                      echo "Uploaded data archive to Garage"
+                    else
+                      echo "ERROR: Failed to upload data archive"
+                      FAILED=1
+                    fi
+                  else
+                    echo "ERROR: Failed to create data archive"
+                    FAILED=1
+                  fi
+                  rm -f "$DATA_FILE"
+
+                  # --- Summary ---
+                  if [ "$FAILED" -eq 1 ]; then
+                    echo "One or more backups failed!"
+                    exit 1
+                  fi
+                  echo "=== All Gitea backups completed successfully ==="
+              env:
+                - name: SSL_CERT_DIR
+                  value: /tools/ssl-certs
+                - name: GARAGE_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: garage-credentials
+                      key: ACCESS_KEY
+                - name: GARAGE_SECRET_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: garage-credentials
+                      key: SECRET_KEY
+                - name: GITEA_DB_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: gitea-db-password
+                      key: password
+              volumeMounts:
+                - name: tools
+                  mountPath: /tools
+                  readOnly: true
+                - name: gitea-data
+                  mountPath: /gitea-data
+                  readOnly: true
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 256Mi
+                limits:
+                  cpu: 500m
+                  memory: 512Mi
+          volumes:
+            - name: tools
+              emptyDir: {}
+            - name: gitea-data
+              hostPath:
+                path: /var/local-path-provisioner/pvc-c2e750bd-6dcd-46a7-bce4-f701034fc16f_gitea_gitea-data
+                type: Directory
