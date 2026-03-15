@@ -15,8 +15,9 @@ resources:
   - nexus
   - sonarqube
   - netbird
-  - pg-backup
   - gitea-backup
+  - keycloak-backup
+  - sonarqube-backup
 
 patches:
   # Use talos01-specific Vault auth path

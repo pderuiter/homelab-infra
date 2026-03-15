@@ -69,9 +69,9 @@ spec:
                 - name: BUCKET
                   value: talos-backup
                 - name: AWS_REGION
-                  value: us-east-1
+                  value: garage
                 - name: CUSTOM_S3_ENDPOINT
-                  value: https://minio-k8s.bsdserver.nl
+                  value: https://backups.bsdserver.nl
                 - name: CLUSTER_NAME
                   value: talos01
                 - name: ENABLE_COMPRESSION

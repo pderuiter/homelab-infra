@@ -1,0 +1,107 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: sonarqube-backup
+  namespace: sonarqube-backup
+spec:
+  schedule: "30 3 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 1800
+      template:
+        spec:
+          restartPolicy: OnFailure
+          initContainers:
+            - name: download-mc
+              image: alpine:3.21
+              command: ["sh", "-c"]
+              args:
+                - |
+                  apk add --no-cache ca-certificates > /dev/null 2>&1
+                  wget -qO /tools/mc https://dl.min.io/client/mc/release/linux-amd64/mc
+                  chmod +x /tools/mc
+                  cp -a /etc/ssl/certs /tools/ssl-certs
+                  echo "mc and CA certificates prepared"
+              volumeMounts:
+                - name: tools
+                  mountPath: /tools
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  cpu: 100m
+                  memory: 64Mi
+          containers:
+            - name: sonarqube-backup
+              image: postgres:16.1
+              command: ["sh", "-c"]
+              args:
+                - |
+                  set -e
+                  DATE=$(date -u +%Y-%m-%dT%H%M%SZ)
+                  BUCKET="sonarqube-backup"
+                  GARAGE_URL="https://backups.bsdserver.nl"
+
+                  MC=/tools/mc
+                  $MC alias set garage "$GARAGE_URL" "$GARAGE_ACCESS_KEY" "$GARAGE_SECRET_KEY" --api S3v4
+                  $MC ls "garage/$BUCKET" > /dev/null
+                  echo "=== Garage S3 connection verified ==="
+
+                  echo "=== Backing up SonarQube PostgreSQL database ==="
+                  DUMP_FILE="/tmp/sonarqube-db-${DATE}.sql.gz"
+                  if PGPASSWORD="$SONARQUBE_DB_PASSWORD" \
+                     pg_dump -h sonarqube-postgres.sonarqube.svc -U sonarqube -d sonarqube \
+                     --no-owner --no-privileges | gzip > "$DUMP_FILE"; then
+                    SIZE=$(du -h "$DUMP_FILE" | cut -f1)
+                    echo "Database dump complete: $SIZE"
+                    if $MC cp "$DUMP_FILE" "garage/$BUCKET/sonarqube-db-${DATE}.sql.gz"; then
+                      echo "Uploaded to Garage"
+                    else
+                      echo "ERROR: Failed to upload"
+                      rm -f "$DUMP_FILE"
+                      exit 1
+                    fi
+                  else
+                    echo "ERROR: pg_dump failed"
+                    rm -f "$DUMP_FILE"
+                    exit 1
+                  fi
+                  rm -f "$DUMP_FILE"
+                  echo "=== SonarQube backup completed successfully ==="
+              env:
+                - name: SSL_CERT_DIR
+                  value: /tools/ssl-certs
+                - name: GARAGE_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: garage-credentials
+                      key: ACCESS_KEY
+                - name: GARAGE_SECRET_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: garage-credentials
+                      key: SECRET_KEY
+                - name: SONARQUBE_DB_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: sonarqube-db-password
+                      key: password
+              volumeMounts:
+                - name: tools
+                  mountPath: /tools
+                  readOnly: true
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+                limits:
+                  cpu: 500m
+                  memory: 256Mi
+          volumes:
+            - name: tools
+              emptyDir: {}
