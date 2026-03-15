@@ -21,11 +21,18 @@ spec:
               command: ["sh", "-c"]
               args:
                 - |
-                  apk add --no-cache ca-certificates > /dev/null 2>&1
+                  apk add --no-cache ca-certificates wget > /dev/null 2>&1
                   wget -qO /tools/mc https://dl.min.io/client/mc/release/linux-amd64/mc
                   chmod +x /tools/mc
+                  cp /usr/bin/wget /tools/wget
+                  mkdir -p /tools/lib
+                  for lib in /lib/ld-musl-x86_64.so.1 /usr/lib/libpcre2-8.so.0 /usr/lib/libidn2.so.0 \
+                             /usr/lib/libssl.so.3 /usr/lib/libcrypto.so.3 /usr/lib/libz.so.1 \
+                             /usr/lib/libunistring.so.5; do
+                    cp "$lib" /tools/lib/
+                  done
                   cp -a /etc/ssl/certs /tools/ssl-certs
-                  echo "mc and CA certificates prepared"
+                  echo "mc, wget and CA certificates prepared"
               volumeMounts:
                 - name: tools
                   mountPath: /tools
@@ -46,6 +53,24 @@ spec:
                   DATE=$(date -u +%Y-%m-%dT%H%M%SZ)
                   BUCKET="keycloak-backup"
                   GARAGE_URL="https://backups.bsdserver.nl"
+                  NTFY_URL="https://ntfy.bsdserver.nl/backups"
+                  JOB_NAME="keycloak-backup"
+
+                  WGET="/tools/lib/ld-musl-x86_64.so.1 --library-path /tools/lib /tools/wget"
+                  CA_CERT="/tools/ssl-certs/ca-certificates.crt"
+
+                  notify_failure() {
+                    local exit_code=$?
+                    if [ $exit_code -ne 0 ]; then
+                      $WGET -qO /dev/null --ca-certificate="$CA_CERT" \
+                        --header="Title: Backup Failed: $JOB_NAME" \
+                        --header="Priority: high" \
+                        --header="Tags: rotating_light" \
+                        --post-data="$JOB_NAME failed at $DATE with exit code $exit_code" \
+                        "$NTFY_URL" 2>/dev/null || true
+                    fi
+                  }
+                  trap notify_failure EXIT
 
                   MC=/tools/mc
                   $MC alias set garage "$GARAGE_URL" "$GARAGE_ACCESS_KEY" "$GARAGE_SECRET_KEY" --api S3v4

@@ -21,11 +21,18 @@ spec:
               command: ["sh", "-c"]
               args:
                 - |
-                  apk add --no-cache ca-certificates > /dev/null 2>&1
+                  apk add --no-cache ca-certificates wget > /dev/null 2>&1
                   wget -qO /tools/mc https://dl.min.io/client/mc/release/linux-amd64/mc
                   chmod +x /tools/mc
+                  cp /usr/bin/wget /tools/wget
+                  mkdir -p /tools/lib
+                  for lib in /lib/ld-musl-x86_64.so.1 /usr/lib/libpcre2-8.so.0 /usr/lib/libidn2.so.0 \
+                             /usr/lib/libssl.so.3 /usr/lib/libcrypto.so.3 /usr/lib/libz.so.1 \
+                             /usr/lib/libunistring.so.5; do
+                    cp "$lib" /tools/lib/
+                  done
                   cp -a /etc/ssl/certs /tools/ssl-certs
-                  echo "mc and CA certificates prepared"
+                  echo "mc, wget and CA certificates prepared"
               volumeMounts:
                 - name: tools
                   mountPath: /tools
@@ -46,7 +53,11 @@ spec:
                   DATE=$(date -u +%Y-%m-%dT%H%M%SZ)
                   BUCKET="gitea-backup"
                   GARAGE_URL="https://backups.bsdserver.nl"
+                  NTFY_URL="https://ntfy.bsdserver.nl/backups"
+                  JOB_NAME="gitea-backup"
                   FAILED=0
+                  WGET="/tools/lib/ld-musl-x86_64.so.1 --library-path /tools/lib /tools/wget"
+                  CA_CERT="/tools/ssl-certs/ca-certificates.crt"
 
                   # Configure mc
                   MC=/tools/mc
@@ -122,6 +133,12 @@ spec:
                   # --- Summary ---
                   if [ "$FAILED" -eq 1 ]; then
                     echo "One or more backups failed!"
+                    $WGET -qO /dev/null --ca-certificate="$CA_CERT" \
+                      --header="Title: Backup Failed: $JOB_NAME" \
+                      --header="Priority: high" \
+                      --header="Tags: rotating_light" \
+                      --post-data="$JOB_NAME failed at $DATE — one or more backup stages did not complete" \
+                      "$NTFY_URL" 2>/dev/null || true
                     exit 1
                   fi
                   echo "=== All Gitea backups completed successfully ==="
