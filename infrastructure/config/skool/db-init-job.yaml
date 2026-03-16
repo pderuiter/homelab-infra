@@ -1,0 +1,81 @@
+---
+# One-time job to create the skool database and user on the shared CNPG cluster
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: skool-db-init
+  namespace: skool
+  labels:
+    app.kubernetes.io/name: skool
+    app.kubernetes.io/component: db-init
+spec:
+  ttlSecondsAfterFinished: 600
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: init
+          image: ghcr.io/cloudnative-pg/postgresql:16.4
+          command: ["sh", "-c"]
+          args:
+            - |
+              echo "Creating skool database and user..."
+              PGPASSWORD=$SUPERUSER_PASSWORD psql -h postgres-cluster-pooler-rw.databases.svc.cluster.local -U $SUPERUSER_USERNAME -d app -c "
+                DO \$\$
+                BEGIN
+                  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '$DB_USERNAME') THEN
+                    CREATE ROLE $DB_USERNAME WITH LOGIN PASSWORD '$DB_PASSWORD';
+                  END IF;
+                END \$\$;
+                SELECT 'CREATE DATABASE $DB_DATABASE OWNER $DB_USERNAME'
+                  WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$DB_DATABASE')\gexec
+                GRANT ALL PRIVILEGES ON DATABASE $DB_DATABASE TO $DB_USERNAME;
+              "
+              echo "Database init complete."
+          envFrom:
+            - secretRef:
+                name: skool-db-credentials
+          env:
+            - name: SUPERUSER_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-superuser-crossns
+                  key: username
+            - name: SUPERUSER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-superuser-crossns
+                  key: password
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: DoesNotExist
+---
+# Copy the superuser credentials from databases namespace to skool namespace
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: postgres-superuser-crossns
+  namespace: skool
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: vault-backend
+  target:
+    name: postgres-superuser-crossns
+    creationPolicy: Owner
+    template:
+      type: kubernetes.io/basic-auth
+  data:
+    - secretKey: username
+      remoteRef:
+        key: secret/data/kubernetes/postgres/superuser
+        property: username
+    - secretKey: password
+      remoteRef:
+        key: secret/data/kubernetes/postgres/superuser
+        property: password

@@ -16,3 +16,4 @@ resources:
   # keycloak: migrated to talos01 cluster (2026-03-09)
   - synology-csi
   - netbird
+  - skool

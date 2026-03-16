@@ -1,0 +1,48 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: skool
+  namespace: skool
+  labels:
+    app.kubernetes.io/name: skool
+    app.kubernetes.io/component: ingress
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    external-dns.alpha.kubernetes.io/external: "true"
+    external-dns.alpha.kubernetes.io/target: wbyc-srv-vpn01.bsdserver.nl
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: skool.bsdserver.nl
+      http:
+        paths:
+          # API routes
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: api
+                port:
+                  name: http
+          # WebSocket/Socket.IO route
+          - path: /socket.io
+            pathType: Prefix
+            backend:
+              service:
+                name: realtime
+                port:
+                  name: http
+          # Everything else goes to Next.js web app
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: web
+                port:
+                  name: http
+  tls:
+    - hosts:
+        - skool.bsdserver.nl
+      secretName: skool-tls
