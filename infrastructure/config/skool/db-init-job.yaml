@@ -3,7 +3,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: skool-db-init-v4
+  name: skool-db-init-v5
   namespace: skool
   labels:
     app.kubernetes.io/name: skool
@@ -23,13 +23,11 @@ spec:
               PG_HOST="postgres-cluster-rw.databases.svc.cluster.local"
 
               echo "Waiting for database to be reachable..."
-              for i in $(seq 1 30); do
-                if pg_isready -h "$PG_HOST" -p 5432 2>/dev/null; then
-                  break
-                fi
-                echo "Attempt $i/30 — waiting 5s..."
+              until PGPASSWORD="$APP_PASSWORD" psql -h "$PG_HOST" -U "$APP_USERNAME" -d app -c "SELECT 1" >/dev/null 2>&1; do
+                echo "Waiting 5s for database..."
                 sleep 5
               done
+              echo "Database is reachable."
 
               echo "Creating skool database and user via app owner..."
               PGPASSWORD="$APP_PASSWORD" psql -h "$PG_HOST" -U "$APP_USERNAME" -d app <<'EOSQL'
