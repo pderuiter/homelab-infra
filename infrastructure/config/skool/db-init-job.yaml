@@ -3,13 +3,13 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: skool-db-init
+  name: skool-db-init-v2
   namespace: skool
   labels:
     app.kubernetes.io/name: skool
     app.kubernetes.io/component: db-init
 spec:
-  ttlSecondsAfterFinished: 600
+  ttlSecondsAfterFinished: 300
   template:
     spec:
       restartPolicy: OnFailure
@@ -19,6 +19,16 @@ spec:
           command: ["sh", "-c"]
           args:
             - |
+              set -e
+              echo "Waiting for database to be reachable..."
+              for i in $(seq 1 30); do
+                if pg_isready -h postgres-cluster-pooler-rw.databases.svc.cluster.local -p 5432 -U "$SUPERUSER_USERNAME" 2>/dev/null; then
+                  break
+                fi
+                echo "Attempt $i/30 — waiting 5s..."
+                sleep 5
+              done
+
               echo "Creating skool database and user..."
               PGPASSWORD=$SUPERUSER_PASSWORD psql -h postgres-cluster-pooler-rw.databases.svc.cluster.local -U $SUPERUSER_USERNAME -d app -c "
                 DO \$\$
