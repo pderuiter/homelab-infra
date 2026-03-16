@@ -3,7 +3,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: skool-db-init-v6
+  name: skool-db-init-v7
   namespace: skool
   labels:
     app.kubernetes.io/name: skool
