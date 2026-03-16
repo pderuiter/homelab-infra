@@ -44,6 +44,8 @@ spec:
                 name: skool-stripe-secrets
             - secretRef:
                 name: skool-s3-secrets
+            - secretRef:
+                name: skool-smtp-secrets
           resources:
             requests:
               cpu: 100m
