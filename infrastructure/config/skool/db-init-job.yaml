@@ -3,7 +3,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: skool-db-init-v3
+  name: skool-db-init-v4
   namespace: skool
   labels:
     app.kubernetes.io/name: skool
@@ -20,41 +20,60 @@ spec:
           args:
             - |
               set -e
+              PG_HOST="postgres-cluster-rw.databases.svc.cluster.local"
+
               echo "Waiting for database to be reachable..."
               for i in $(seq 1 30); do
-                if pg_isready -h postgres-cluster-rw.databases.svc.cluster.local -p 5432 -U "$SUPERUSER_USERNAME" 2>/dev/null; then
+                if pg_isready -h "$PG_HOST" -p 5432 2>/dev/null; then
                   break
                 fi
                 echo "Attempt $i/30 — waiting 5s..."
                 sleep 5
               done
 
-              echo "Creating skool database and user..."
-              PGPASSWORD=$SUPERUSER_PASSWORD psql -h postgres-cluster-rw.databases.svc.cluster.local -U $SUPERUSER_USERNAME -d app -c "
-                DO \$\$
-                BEGIN
-                  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '$DB_USERNAME') THEN
-                    CREATE ROLE $DB_USERNAME WITH LOGIN PASSWORD '$DB_PASSWORD';
-                  END IF;
-                END \$\$;
-                SELECT 'CREATE DATABASE $DB_DATABASE OWNER $DB_USERNAME'
-                  WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$DB_DATABASE')\gexec
-                GRANT ALL PRIVILEGES ON DATABASE $DB_DATABASE TO $DB_USERNAME;
-              "
+              echo "Creating skool database and user via app owner..."
+              PGPASSWORD="$APP_PASSWORD" psql -h "$PG_HOST" -U "$APP_USERNAME" -d app <<'EOSQL'
+              DO $$
+              BEGIN
+                IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'skool') THEN
+                  CREATE ROLE skool WITH LOGIN PASSWORD 'placeholder';
+                END IF;
+              END
+              $$;
+              EOSQL
+
+              # Set the real password (from Vault secret)
+              PGPASSWORD="$APP_PASSWORD" psql -h "$PG_HOST" -U "$APP_USERNAME" -d app -c \
+                "ALTER ROLE skool WITH PASSWORD '$DB_PASSWORD';"
+
+              # Create database if not exists
+              DB_EXISTS=$(PGPASSWORD="$APP_PASSWORD" psql -h "$PG_HOST" -U "$APP_USERNAME" -d app -tAc \
+                "SELECT 1 FROM pg_database WHERE datname = '$DB_DATABASE'")
+              if [ "$DB_EXISTS" != "1" ]; then
+                PGPASSWORD="$APP_PASSWORD" psql -h "$PG_HOST" -U "$APP_USERNAME" -d app -c \
+                  "CREATE DATABASE $DB_DATABASE OWNER skool;"
+                echo "Database '$DB_DATABASE' created."
+              else
+                echo "Database '$DB_DATABASE' already exists."
+              fi
+
+              PGPASSWORD="$APP_PASSWORD" psql -h "$PG_HOST" -U "$APP_USERNAME" -d app -c \
+                "GRANT ALL PRIVILEGES ON DATABASE $DB_DATABASE TO skool;"
+
               echo "Database init complete."
           envFrom:
             - secretRef:
                 name: skool-db-credentials
           env:
-            - name: SUPERUSER_USERNAME
+            - name: APP_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: postgres-superuser-crossns
+                  name: postgres-app-crossns
                   key: username
-            - name: SUPERUSER_PASSWORD
+            - name: APP_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: postgres-superuser-crossns
+                  name: postgres-app-crossns
                   key: password
       affinity:
         nodeAffinity:
@@ -64,11 +83,11 @@ spec:
                   - key: node-role.kubernetes.io/control-plane
                     operator: DoesNotExist
 ---
-# Copy the superuser credentials from databases namespace to skool namespace
+# Copy the app credentials from Vault (CNPG bootstrap owner with CREATEDB)
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
-  name: postgres-superuser-crossns
+  name: postgres-app-crossns
   namespace: skool
 spec:
   refreshInterval: 1h
@@ -76,16 +95,16 @@ spec:
     kind: ClusterSecretStore
     name: vault-backend
   target:
-    name: postgres-superuser-crossns
+    name: postgres-app-crossns
     creationPolicy: Owner
     template:
       type: kubernetes.io/basic-auth
   data:
     - secretKey: username
       remoteRef:
-        key: secret/data/kubernetes/postgres/superuser
+        key: secret/data/kubernetes/postgres/app
         property: username
     - secretKey: password
       remoteRef:
-        key: secret/data/kubernetes/postgres/superuser
+        key: secret/data/kubernetes/postgres/app
         property: password
