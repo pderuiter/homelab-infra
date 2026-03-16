@@ -3,7 +3,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: skool-db-init-v5
+  name: skool-db-init-v6
   namespace: skool
   labels:
     app.kubernetes.io/name: skool
@@ -30,34 +30,29 @@ spec:
               echo "Database is reachable."
 
               echo "Creating skool database and user via app owner..."
-              PGPASSWORD="$APP_PASSWORD" psql -h "$PG_HOST" -U "$APP_USERNAME" -d app <<'EOSQL'
-              DO $$
-              BEGIN
-                IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'skool') THEN
-                  CREATE ROLE skool WITH LOGIN PASSWORD 'placeholder';
-                END IF;
-              END
-              $$;
-              EOSQL
+              export PGPASSWORD="$APP_PASSWORD"
+              PSQL="psql -h $PG_HOST -U $APP_USERNAME -d app"
 
-              # Set the real password (from Vault secret)
-              PGPASSWORD="$APP_PASSWORD" psql -h "$PG_HOST" -U "$APP_USERNAME" -d app -c \
-                "ALTER ROLE skool WITH PASSWORD '$DB_PASSWORD';"
+              # Create role if not exists (use simple check to avoid $$ escaping)
+              ROLE_EXISTS=$($PSQL -tAc "SELECT 1 FROM pg_roles WHERE rolname = 'skool'")
+              if [ "$ROLE_EXISTS" != "1" ]; then
+                $PSQL -c "CREATE ROLE skool WITH LOGIN PASSWORD '$DB_PASSWORD';"
+                echo "Role 'skool' created."
+              else
+                $PSQL -c "ALTER ROLE skool WITH PASSWORD '$DB_PASSWORD';"
+                echo "Role 'skool' already exists, password updated."
+              fi
 
               # Create database if not exists
-              DB_EXISTS=$(PGPASSWORD="$APP_PASSWORD" psql -h "$PG_HOST" -U "$APP_USERNAME" -d app -tAc \
-                "SELECT 1 FROM pg_database WHERE datname = '$DB_DATABASE'")
+              DB_EXISTS=$($PSQL -tAc "SELECT 1 FROM pg_database WHERE datname = '$DB_DATABASE'")
               if [ "$DB_EXISTS" != "1" ]; then
-                PGPASSWORD="$APP_PASSWORD" psql -h "$PG_HOST" -U "$APP_USERNAME" -d app -c \
-                  "CREATE DATABASE $DB_DATABASE OWNER skool;"
+                $PSQL -c "CREATE DATABASE $DB_DATABASE OWNER skool;"
                 echo "Database '$DB_DATABASE' created."
               else
                 echo "Database '$DB_DATABASE' already exists."
               fi
 
-              PGPASSWORD="$APP_PASSWORD" psql -h "$PG_HOST" -U "$APP_USERNAME" -d app -c \
-                "GRANT ALL PRIVILEGES ON DATABASE $DB_DATABASE TO skool;"
-
+              $PSQL -c "GRANT ALL PRIVILEGES ON DATABASE $DB_DATABASE TO skool;"
               echo "Database init complete."
           envFrom:
             - secretRef:
