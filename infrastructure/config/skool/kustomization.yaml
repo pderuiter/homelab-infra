@@ -5,9 +5,12 @@ resources:
   - namespace.yaml
   - externalsecrets.yaml
   - db-init-job.yaml
+  - db-migrate-job.yaml
+  - db-rls-setup-job.yaml
   - redis.yaml
   - api.yaml
   - admin-api.yaml
   - web.yaml
   - realtime.yaml
+  - worker.yaml
   - ingress.yaml

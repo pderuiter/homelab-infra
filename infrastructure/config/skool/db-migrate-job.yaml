@@ -1,0 +1,99 @@
+---
+# Pre-deployment migration job: runs all pending SQL migrations against the skool database.
+# Bump the version suffix (v1 → v2 → ...) to trigger a new migration run.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: skool-db-migrate-v1
+  namespace: skool
+  labels:
+    app.kubernetes.io/name: skool
+    app.kubernetes.io/component: db-migrate
+spec:
+  ttlSecondsAfterFinished: 600
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: OnFailure
+      initContainers:
+        # Pull the latest API image to get the migration files
+        - name: copy-migrations
+          image: nexus.bsdserver.nl/docker-registry/wbyc/docker-skool-api:latest
+          imagePullPolicy: Always
+          command: ["sh", "-c"]
+          args:
+            - |
+              cp -r /app/node_modules/.pnpm/@skool+db*/node_modules/@skool/db/dist/migrations/ /migrations/ 2>/dev/null || \
+              find /app -path "*/packages/db/src/migrations" -exec cp -r {} /migrations/ \; 2>/dev/null || \
+              find /app -name "*.sql" -path "*/migrations/*" -exec cp {} /migrations/ \; 2>/dev/null
+              ls -la /migrations/ || echo "No migrations found"
+          volumeMounts:
+            - name: migrations
+              mountPath: /migrations
+      containers:
+        - name: migrate
+          image: ghcr.io/cloudnative-pg/postgresql:16.4
+          command: ["sh", "-c"]
+          args:
+            - |
+              set -e
+              PG_HOST="postgres-cluster-pooler-rw.databases.svc.cluster.local"
+
+              echo "Waiting for database..."
+              until PGPASSWORD="$DB_PASSWORD" psql -h "$PG_HOST" -U "$DB_USERNAME" -d "$DB_DATABASE" -c "SELECT 1" >/dev/null 2>&1; do
+                sleep 5
+              done
+
+              # Create migration tracking table if not exists
+              PGPASSWORD="$DB_PASSWORD" psql -h "$PG_HOST" -U "$DB_USERNAME" -d "$DB_DATABASE" -c "
+                CREATE TABLE IF NOT EXISTS _migrations (
+                  name TEXT PRIMARY KEY,
+                  applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                );
+              "
+
+              # Run each migration file in order, skip already applied
+              MIGRATION_DIR="/migrations"
+              if [ ! -d "$MIGRATION_DIR" ] || [ -z "$(ls $MIGRATION_DIR/*.sql 2>/dev/null)" ]; then
+                echo "No migration files found in $MIGRATION_DIR"
+                exit 0
+              fi
+
+              for f in $(ls "$MIGRATION_DIR"/*.sql | sort); do
+                BASENAME=$(basename "$f")
+                ALREADY_APPLIED=$(PGPASSWORD="$DB_PASSWORD" psql -h "$PG_HOST" -U "$DB_USERNAME" -d "$DB_DATABASE" -tAc \
+                  "SELECT 1 FROM _migrations WHERE name = '$BASENAME'")
+                if [ "$ALREADY_APPLIED" = "1" ]; then
+                  echo "SKIP: $BASENAME (already applied)"
+                  continue
+                fi
+                echo "APPLY: $BASENAME"
+                if PGPASSWORD="$DB_PASSWORD" psql -h "$PG_HOST" -U "$DB_USERNAME" -d "$DB_DATABASE" -f "$f" 2>&1; then
+                  PGPASSWORD="$DB_PASSWORD" psql -h "$PG_HOST" -U "$DB_USERNAME" -d "$DB_DATABASE" -c \
+                    "INSERT INTO _migrations (name) VALUES ('$BASENAME')"
+                  echo "  OK: $BASENAME applied"
+                else
+                  echo "  FAIL: $BASENAME — stopping"
+                  exit 1
+                fi
+              done
+              echo "All migrations complete."
+          envFrom:
+            - secretRef:
+                name: skool-db-credentials
+          volumeMounts:
+            - name: migrations
+              mountPath: /migrations
+              readOnly: true
+      volumes:
+        - name: migrations
+          emptyDir: {}
+      imagePullSecrets:
+        - name: skool-registry-credentials
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: DoesNotExist
