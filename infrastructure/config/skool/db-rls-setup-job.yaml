@@ -5,7 +5,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: skool-db-rls-setup-v1
+  name: skool-db-rls-setup-v2
   namespace: skool
   labels:
     app.kubernetes.io/name: skool
@@ -23,15 +23,15 @@ spec:
           args:
             - |
               set -e
-              PG_HOST="postgres-cluster-pooler-rw.databases.svc.cluster.local"
+              PG_HOST="postgres-cluster-rw.databases.svc.cluster.local"
 
               echo "Waiting for database..."
-              until PGPASSWORD="$DB_PASSWORD" psql -h "$PG_HOST" -U "$DB_USERNAME" -d "$DB_DATABASE" -c "SELECT 1" >/dev/null 2>&1; do
+              until PGPASSWORD="$APP_PASSWORD" psql -h "$PG_HOST" -U "$APP_USERNAME" -d "$DB_DATABASE" -c "SELECT 1" >/dev/null 2>&1; do
                 sleep 5
               done
 
-              export PGPASSWORD="$DB_PASSWORD"
-              PSQL="psql -h $PG_HOST -U $DB_USERNAME -d $DB_DATABASE"
+              export PGPASSWORD="$APP_PASSWORD"
+              PSQL="psql -h $PG_HOST -U $APP_USERNAME -d $DB_DATABASE"
 
               echo "=== Creating skool_api restricted role ==="
               ROLE_EXISTS=$($PSQL -tAc "SELECT 1 FROM pg_roles WHERE rolname = 'skool_api'")
@@ -77,6 +77,16 @@ spec:
             - secretRef:
                 name: skool-db-credentials
           env:
+            - name: APP_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-app-crossns
+                  key: username
+            - name: APP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-app-crossns
+                  key: password
             - name: API_DB_PASSWORD
               valueFrom:
                 secretKeyRef:
