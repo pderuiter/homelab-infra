@@ -5,14 +5,14 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: skool-db-rls-setup-v4
+  name: skool-db-rls-setup-v5
   namespace: skool
   labels:
     app.kubernetes.io/name: skool
     app.kubernetes.io/component: db-rls-setup
 spec:
-  ttlSecondsAfterFinished: 600
-  backoffLimit: 3
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 1
   template:
     spec:
       restartPolicy: OnFailure
