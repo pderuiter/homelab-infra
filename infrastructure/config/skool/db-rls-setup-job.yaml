@@ -5,7 +5,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: skool-db-rls-setup-v2
+  name: skool-db-rls-setup-v3
   namespace: skool
   labels:
     app.kubernetes.io/name: skool
@@ -43,21 +43,25 @@ spec:
                 echo "Role 'skool_api' exists, password updated."
               fi
 
-              echo "=== Granting basic permissions ==="
+              echo "=== Granting connect and schema usage (as app superuser) ==="
               $PSQL -c "GRANT CONNECT ON DATABASE $DB_DATABASE TO skool_api;"
               $PSQL -c "GRANT USAGE ON SCHEMA public TO skool_api;"
-              $PSQL -c "GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO skool_api;"
-              $PSQL -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO skool_api;"
-              $PSQL -c "GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO skool_api;"
-              $PSQL -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO skool_api;"
-              $PSQL -c "GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO skool_api;"
-              $PSQL -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO skool_api;"
+
+              echo "=== Granting table/sequence/function permissions (as skool owner) ==="
+              export PGPASSWORD="$DB_PASSWORD"
+              PSQL_OWNER="psql -h $PG_HOST -U $DB_USERNAME -d $DB_DATABASE"
+              $PSQL_OWNER -c "GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO skool_api;"
+              $PSQL_OWNER -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO skool_api;"
+              $PSQL_OWNER -c "GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO skool_api;"
+              $PSQL_OWNER -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO skool_api;"
+              $PSQL_OWNER -c "GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO skool_api;"
+              $PSQL_OWNER -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO skool_api;"
 
               echo "=== Enabling RLS on all tables ==="
-              TABLES=$($PSQL -tAc "SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename NOT LIKE '_%'")
+              TABLES=$($PSQL_OWNER -tAc "SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename NOT LIKE '_%'")
               for TABLE in $TABLES; do
-                $PSQL -c "ALTER TABLE $TABLE ENABLE ROW LEVEL SECURITY;"
-                $PSQL -c "ALTER TABLE $TABLE FORCE ROW LEVEL SECURITY;"
+                $PSQL_OWNER -c "ALTER TABLE $TABLE ENABLE ROW LEVEL SECURITY;"
+                $PSQL_OWNER -c "ALTER TABLE $TABLE FORCE ROW LEVEL SECURITY;"
                 echo "  RLS enabled on: $TABLE"
               done
 
@@ -67,7 +71,7 @@ spec:
               echo "RLS policies should be applied via db-migrate-job (migrations 0006, 0007)"
 
               echo "=== Verifying ==="
-              $PSQL -c "SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname = 'public' AND tablename NOT LIKE '_%' ORDER BY tablename;"
+              $PSQL_OWNER -c "SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname = 'public' AND tablename NOT LIKE '_%' ORDER BY tablename;"
 
               echo "RLS setup complete."
               echo ""
