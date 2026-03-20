@@ -34,7 +34,7 @@ spec:
               value: redis://redis.skool.svc.cluster.local:6379
           envFrom:
             - secretRef:
-                name: skool-db-credentials
+                name: skool-db-api-credentials
             - secretRef:
                 name: skool-api-secrets
             - secretRef:
