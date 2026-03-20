@@ -25,8 +25,8 @@ spec:
         - name: worker
           image: nexus.bsdserver.nl/docker-registry/wbyc/docker-skool-api:latest
           imagePullPolicy: Always
-          command: ["tsx"]
-          args: ["src/worker.ts"]
+          command: ["node"]
+          args: ["dist/worker.js"]
           env:
             - name: NODE_ENV
               value: production
