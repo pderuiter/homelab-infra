@@ -14,3 +14,4 @@ resources:
   - realtime.yaml
   - worker.yaml
   - ingress.yaml
+  - monitoring.yaml

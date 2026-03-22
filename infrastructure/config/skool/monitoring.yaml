@@ -1,0 +1,88 @@
+---
+# ServiceMonitor: Prometheus auto-discovers and scrapes /metrics from API pods
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: skool-api
+  namespace: skool
+  labels:
+    app.kubernetes.io/name: skool
+    app.kubernetes.io/component: api
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: skool
+      app.kubernetes.io/component: api
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+---
+# PrometheusRule: Alerting rules for the Skool platform
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: skool-alerts
+  namespace: skool
+  labels:
+    app.kubernetes.io/name: skool
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: skool.rules
+      rules:
+        - alert: SkoolHighErrorRate
+          expr: |
+            (
+              sum(rate(http_requests_total{job="skool-api",status=~"5.."}[5m]))
+              / sum(rate(http_requests_total{job="skool-api"}[5m]))
+            ) > 0.05
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Skool API error rate above 5%"
+            description: "{{ $value | humanizePercentage }} of requests are failing"
+
+        - alert: SkoolHighLatency
+          expr: |
+            histogram_quantile(0.95,
+              sum(rate(http_request_duration_seconds_bucket{job="skool-api"}[5m])) by (le)
+            ) > 2
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Skool API P95 latency above 2 seconds"
+            description: "P95 latency is {{ $value | humanizeDuration }}"
+
+        - alert: SkoolQueueBacklog
+          expr: skool_queue_jobs_waiting > 100
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "BullMQ queue backlog exceeding 100 jobs"
+            description: "Queue has {{ $value }} waiting jobs"
+
+        - alert: SkoolAPIDown
+          expr: up{job="skool-api"} == 0
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Skool API is down"
+
+        - alert: SkoolCacheHitRateLow
+          expr: |
+            (
+              sum(rate(skool_cache_hits_total[15m]))
+              / (sum(rate(skool_cache_hits_total[15m])) + sum(rate(skool_cache_misses_total[15m])))
+            ) < 0.5
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Cache hit ratio below 50%"
+            description: "Current hit ratio: {{ $value | humanizePercentage }}"
