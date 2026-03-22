@@ -1,0 +1,102 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-skool-api
+  namespace: observability
+  labels:
+    grafana_dashboard: "1"
+    app.kubernetes.io/name: skool
+data:
+  skool-api-overview.json: |
+    {
+      "dashboard": {
+        "uid": "skool-api-overview",
+        "title": "Skool API Overview",
+        "tags": ["skool"],
+        "timezone": "browser",
+        "refresh": "30s",
+        "time": { "from": "now-1h", "to": "now" },
+        "panels": [
+          {
+            "title": "Request Rate",
+            "type": "timeseries",
+            "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+            "targets": [{
+              "expr": "sum(rate(http_requests_total{job=\"skool-api\"}[5m])) by (method)",
+              "legendFormat": "{{method}}"
+            }],
+            "fieldConfig": { "defaults": { "unit": "reqps" } }
+          },
+          {
+            "title": "Error Rate",
+            "type": "timeseries",
+            "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+            "targets": [
+              {
+                "expr": "sum(rate(http_requests_total{job=\"skool-api\",status=~\"5..\"}[5m]))",
+                "legendFormat": "5xx errors/s"
+              },
+              {
+                "expr": "sum(rate(http_requests_total{job=\"skool-api\",status=~\"4..\"}[5m]))",
+                "legendFormat": "4xx errors/s"
+              }
+            ],
+            "fieldConfig": { "defaults": { "unit": "reqps" } }
+          },
+          {
+            "title": "Request Latency (P50 / P95 / P99)",
+            "type": "timeseries",
+            "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{job=\"skool-api\"}[5m])) by (le))",
+                "legendFormat": "P50"
+              },
+              {
+                "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"skool-api\"}[5m])) by (le))",
+                "legendFormat": "P95"
+              },
+              {
+                "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{job=\"skool-api\"}[5m])) by (le))",
+                "legendFormat": "P99"
+              }
+            ],
+            "fieldConfig": { "defaults": { "unit": "s" } }
+          },
+          {
+            "title": "Requests by Status Code",
+            "type": "piechart",
+            "gridPos": { "h": 8, "w": 6, "x": 12, "y": 8 },
+            "targets": [{
+              "expr": "sum(increase(http_requests_total{job=\"skool-api\"}[1h])) by (status)",
+              "legendFormat": "{{status}}"
+            }]
+          },
+          {
+            "title": "Top Endpoints by Request Rate",
+            "type": "bargauge",
+            "gridPos": { "h": 8, "w": 6, "x": 18, "y": 8 },
+            "targets": [{
+              "expr": "topk(10, sum(rate(http_requests_total{job=\"skool-api\"}[5m])) by (path))",
+              "legendFormat": "{{path}}"
+            }],
+            "fieldConfig": { "defaults": { "unit": "reqps" } }
+          },
+          {
+            "title": "Latency by Endpoint (P95)",
+            "type": "table",
+            "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+            "targets": [{
+              "expr": "topk(15, histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"skool-api\"}[5m])) by (le, path)))",
+              "legendFormat": "{{path}}",
+              "format": "table",
+              "instant": true
+            }],
+            "fieldConfig": { "defaults": { "unit": "s" } }
+          }
+        ],
+        "templating": { "list": [] },
+        "schemaVersion": 39
+      }
+    }

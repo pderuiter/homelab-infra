@@ -1,0 +1,73 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-skool-queues
+  namespace: observability
+  labels:
+    grafana_dashboard: "1"
+    app.kubernetes.io/name: skool
+data:
+  skool-queues.json: |
+    {
+      "dashboard": {
+        "uid": "skool-queues",
+        "title": "Skool Queues & Workers",
+        "tags": ["skool"],
+        "timezone": "browser",
+        "refresh": "30s",
+        "time": { "from": "now-1h", "to": "now" },
+        "panels": [
+          {
+            "title": "Queue Depth (Waiting Jobs)",
+            "type": "timeseries",
+            "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+            "targets": [{
+              "expr": "skool_queue_jobs_waiting{job=\"skool-api\"}",
+              "legendFormat": "{{queue}}"
+            }]
+          },
+          {
+            "title": "Active Jobs",
+            "type": "timeseries",
+            "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+            "targets": [{
+              "expr": "skool_queue_jobs_active{job=\"skool-api\"}",
+              "legendFormat": "{{queue}}"
+            }]
+          },
+          {
+            "title": "Jobs Completed (rate/s)",
+            "type": "timeseries",
+            "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+            "targets": [{
+              "expr": "sum(rate(skool_queue_jobs_completed_total{job=\"skool-api\"}[5m])) by (queue)",
+              "legendFormat": "{{queue}}"
+            }],
+            "fieldConfig": { "defaults": { "unit": "ops" } }
+          },
+          {
+            "title": "Jobs Failed (rate/s)",
+            "type": "timeseries",
+            "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+            "targets": [{
+              "expr": "sum(rate(skool_queue_jobs_failed_total{job=\"skool-api\"}[5m])) by (queue)",
+              "legendFormat": "{{queue}}"
+            }],
+            "fieldConfig": { "defaults": { "unit": "ops" } }
+          },
+          {
+            "title": "Job Processing Duration (P95)",
+            "type": "timeseries",
+            "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+            "targets": [{
+              "expr": "histogram_quantile(0.95, sum(rate(skool_queue_job_duration_seconds_bucket{job=\"skool-api\"}[5m])) by (le, queue))",
+              "legendFormat": "{{queue}} P95"
+            }],
+            "fieldConfig": { "defaults": { "unit": "s" } }
+          }
+        ],
+        "templating": { "list": [] },
+        "schemaVersion": 39
+      }
+    }
