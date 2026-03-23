@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: wbyc-website
+  namespace: wbyc-website
+  labels:
+    app.kubernetes.io/name: wbyc-website
+    app.kubernetes.io/component: website
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: wbyc-website
