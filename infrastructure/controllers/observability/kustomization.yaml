@@ -11,6 +11,10 @@ resources:
   - keycloak-dashboard-configmap.yaml
   - minio-dashboard-configmap.yaml
   - pangolin-dashboard-configmap.yaml
+  - skool-dashboard-api.yaml
+  - skool-dashboard-queues.yaml
+  - skool-dashboard-cache.yaml
+  - skool-dashboard-business.yaml
   # traefik-dashboard-configmap.yaml removed - duplicate of Helm-provisioned dashboard
   - ntfy-helmrelease.yaml
   - homelab-prometheusrules.yaml

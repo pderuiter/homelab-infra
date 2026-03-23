@@ -15,7 +15,3 @@ resources:
   - worker.yaml
   - ingress.yaml
   - monitoring.yaml
-  - grafana-dashboard-api.yaml
-  - grafana-dashboard-queues.yaml
-  - grafana-dashboard-cache.yaml
-  - grafana-dashboard-business.yaml
