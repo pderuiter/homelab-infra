@@ -10,7 +10,6 @@ metadata:
 data:
   skool-queues.json: |
     {
-      "dashboard": {
         "uid": "skool-queues",
         "title": "Skool Queues & Workers",
         "tags": ["skool"],
@@ -70,4 +69,3 @@ data:
         "templating": { "list": [] },
         "schemaVersion": 39
       }
-    }

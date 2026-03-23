@@ -10,7 +10,6 @@ metadata:
 data:
   skool-cache-storage.json: |
     {
-      "dashboard": {
         "uid": "skool-cache-storage",
         "title": "Skool Storage & Cache",
         "tags": ["skool"],
@@ -90,4 +89,3 @@ data:
         "templating": { "list": [] },
         "schemaVersion": 39
       }
-    }

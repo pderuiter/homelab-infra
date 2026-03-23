@@ -10,7 +10,6 @@ metadata:
 data:
   skool-api-overview.json: |
     {
-      "dashboard": {
         "uid": "skool-api-overview",
         "title": "Skool API Overview",
         "tags": ["skool"],
@@ -99,4 +98,3 @@ data:
         "templating": { "list": [] },
         "schemaVersion": 39
       }
-    }

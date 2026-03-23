@@ -10,7 +10,6 @@ metadata:
 data:
   skool-business.json: |
     {
-      "dashboard": {
         "uid": "skool-business",
         "title": "Skool Business Metrics",
         "tags": ["skool"],
@@ -99,4 +98,3 @@ data:
         "templating": { "list": [] },
         "schemaVersion": 39
       }
-    }
