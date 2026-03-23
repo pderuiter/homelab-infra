@@ -22,7 +22,7 @@ data:
             "type": "stat",
             "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
             "targets": [{
-              "expr": "skool_active_users_total{job=\"skool-api\"}",
+              "expr": "skool_active_users_total{job=\"api\"}",
               "legendFormat": "Online"
             }],
             "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "value": 0, "color": "blue" }] } } }
@@ -32,7 +32,7 @@ data:
             "type": "stat",
             "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
             "targets": [{
-              "expr": "skool_groups_total{job=\"skool-api\"}",
+              "expr": "skool_groups_total{job=\"api\"}",
               "legendFormat": "Groups"
             }],
             "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "value": 0, "color": "green" }] } } }
@@ -42,7 +42,7 @@ data:
             "type": "stat",
             "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
             "targets": [{
-              "expr": "sum(increase(skool_magic_links_sent_total{job=\"skool-api\"}[24h]))",
+              "expr": "sum(increase(skool_magic_links_sent_total{job=\"api\"}[24h]))",
               "legendFormat": "Sent"
             }],
             "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "value": 0, "color": "purple" }] } } }
@@ -52,7 +52,7 @@ data:
             "type": "stat",
             "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
             "targets": [{
-              "expr": "sum(increase(skool_magic_links_verified_total{job=\"skool-api\"}[24h]))",
+              "expr": "sum(increase(skool_magic_links_verified_total{job=\"api\"}[24h]))",
               "legendFormat": "Logins"
             }],
             "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "value": 0, "color": "green" }] } } }
@@ -62,7 +62,7 @@ data:
             "type": "timeseries",
             "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
             "targets": [{
-              "expr": "sum(increase(skool_magic_links_verified_total{job=\"skool-api\"}[1h]))",
+              "expr": "sum(increase(skool_magic_links_verified_total{job=\"api\"}[1h]))",
               "legendFormat": "Logins/hour"
             }]
           },
@@ -71,7 +71,7 @@ data:
             "type": "timeseries",
             "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
             "targets": [{
-              "expr": "sum(increase(skool_posts_total{job=\"skool-api\"}[1h]))",
+              "expr": "sum(increase(skool_posts_total{job=\"api\"}[1h]))",
               "legendFormat": "Posts/hour"
             }]
           },
@@ -80,7 +80,7 @@ data:
             "type": "timeseries",
             "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
             "targets": [{
-              "expr": "sum(increase(skool_uploads_total{job=\"skool-api\"}[1h]))",
+              "expr": "sum(increase(skool_uploads_total{job=\"api\"}[1h]))",
               "legendFormat": "Uploads/hour"
             }]
           },
@@ -89,7 +89,7 @@ data:
             "type": "timeseries",
             "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
             "targets": [{
-              "expr": "sum(rate(http_requests_total{job=\"skool-api\"}[5m]))",
+              "expr": "sum(rate(http_requests_total{job=\"api\"}[5m]))",
               "legendFormat": "Total req/s"
             }],
             "fieldConfig": { "defaults": { "unit": "reqps" } }

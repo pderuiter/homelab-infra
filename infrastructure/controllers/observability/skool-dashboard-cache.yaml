@@ -22,7 +22,7 @@ data:
             "type": "gauge",
             "gridPos": { "h": 8, "w": 6, "x": 0, "y": 0 },
             "targets": [{
-              "expr": "sum(rate(skool_cache_hits_total{job=\"skool-api\"}[15m])) / (sum(rate(skool_cache_hits_total{job=\"skool-api\"}[15m])) + sum(rate(skool_cache_misses_total{job=\"skool-api\"}[15m])))",
+              "expr": "sum(rate(skool_cache_hits_total{job=\"api\"}[15m])) / (sum(rate(skool_cache_hits_total{job=\"api\"}[15m])) + sum(rate(skool_cache_misses_total{job=\"api\"}[15m])))",
               "legendFormat": "Hit Ratio"
             }],
             "fieldConfig": {
@@ -45,11 +45,11 @@ data:
             "gridPos": { "h": 8, "w": 18, "x": 6, "y": 0 },
             "targets": [
               {
-                "expr": "sum(rate(skool_cache_hits_total{job=\"skool-api\"}[5m]))",
+                "expr": "sum(rate(skool_cache_hits_total{job=\"api\"}[5m]))",
                 "legendFormat": "Hits/s"
               },
               {
-                "expr": "sum(rate(skool_cache_misses_total{job=\"skool-api\"}[5m]))",
+                "expr": "sum(rate(skool_cache_misses_total{job=\"api\"}[5m]))",
                 "legendFormat": "Misses/s"
               }
             ],
@@ -60,7 +60,7 @@ data:
             "type": "bargauge",
             "gridPos": { "h": 8, "w": 24, "x": 0, "y": 8 },
             "targets": [{
-              "expr": "sum(rate(skool_cache_hits_total{job=\"skool-api\"}[15m])) by (path) / (sum(rate(skool_cache_hits_total{job=\"skool-api\"}[15m])) by (path) + sum(rate(skool_cache_misses_total{job=\"skool-api\"}[15m])) by (path))",
+              "expr": "sum(rate(skool_cache_hits_total{job=\"api\"}[15m])) by (path) / (sum(rate(skool_cache_hits_total{job=\"api\"}[15m])) by (path) + sum(rate(skool_cache_misses_total{job=\"api\"}[15m])) by (path))",
               "legendFormat": "{{path}}"
             }],
             "fieldConfig": { "defaults": { "unit": "percentunit" } }
@@ -70,7 +70,7 @@ data:
             "type": "timeseries",
             "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
             "targets": [{
-              "expr": "sum(rate(skool_uploads_total{job=\"skool-api\"}[5m]))",
+              "expr": "sum(rate(skool_uploads_total{job=\"api\"}[5m]))",
               "legendFormat": "Uploads/s"
             }],
             "fieldConfig": { "defaults": { "unit": "ops" } }
@@ -80,7 +80,7 @@ data:
             "type": "timeseries",
             "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
             "targets": [{
-              "expr": "histogram_quantile(0.95, sum(rate(http_response_size_bytes_bucket{job=\"skool-api\"}[5m])) by (le))",
+              "expr": "histogram_quantile(0.95, sum(rate(http_response_size_bytes_bucket{job=\"api\"}[5m])) by (le))",
               "legendFormat": "P95 response size"
             }],
             "fieldConfig": { "defaults": { "unit": "bytes" } }

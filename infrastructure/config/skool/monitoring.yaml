@@ -35,8 +35,8 @@ spec:
         - alert: SkoolHighErrorRate
           expr: |
             (
-              sum(rate(http_requests_total{job="skool-api",status=~"5.."}[5m]))
-              / sum(rate(http_requests_total{job="skool-api"}[5m]))
+              sum(rate(http_requests_total{job="api",status=~"5.."}[5m]))
+              / sum(rate(http_requests_total{job="api"}[5m]))
             ) > 0.05
           for: 5m
           labels:
@@ -48,7 +48,7 @@ spec:
         - alert: SkoolHighLatency
           expr: |
             histogram_quantile(0.95,
-              sum(rate(http_request_duration_seconds_bucket{job="skool-api"}[5m])) by (le)
+              sum(rate(http_request_duration_seconds_bucket{job="api"}[5m])) by (le)
             ) > 2
           for: 5m
           labels:
@@ -67,7 +67,7 @@ spec:
             description: "Queue has {{ $value }} waiting jobs"
 
         - alert: SkoolAPIDown
-          expr: up{job="skool-api"} == 0
+          expr: up{job="api"} == 0
           for: 2m
           labels:
             severity: critical
