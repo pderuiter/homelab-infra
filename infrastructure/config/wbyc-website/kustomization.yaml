@@ -3,6 +3,7 @@ kind: Kustomization
 namespace: wbyc-website
 resources:
   - namespace.yaml
+  - externalsecret.yaml
   - deployment.yaml
   - service.yaml
   - ingress.yaml

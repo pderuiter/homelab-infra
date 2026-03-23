@@ -16,6 +16,8 @@ spec:
       labels:
         app.kubernetes.io/name: wbyc-website
     spec:
+      imagePullSecrets:
+        - name: nexus-registry-credentials
       containers:
         - name: nginx
           image: nexus.bsdserver.nl:443/docker-registry/website-hugo-wbyc:1.0.0
