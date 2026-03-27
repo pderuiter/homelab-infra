@@ -44,6 +44,8 @@ spec:
         app.kubernetes.io/component: database
         app.kubernetes.io/part-of: ghost
     spec:
+      securityContext:
+        fsGroup: 999
       # Run only on worker nodes
       affinity:
         nodeAffinity:
@@ -55,6 +57,11 @@ spec:
       containers:
         - name: mysql
           image: mysql:8.0
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+              add: ["SETUID", "SETGID"]  # MySQL entrypoint needs these to drop from root to mysql user
           ports:
             - containerPort: 3306
               name: mysql
