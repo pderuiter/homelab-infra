@@ -13,11 +13,12 @@ resources:
   - keycloak
   - gitea
   - nexus
-  - sonarqube
+  # sonarqube - moved to arcturus (Docker), manifests kept for reference
+  # - sonarqube
+  # - sonarqube-backup
   - netbird
   - gitea-backup
   - keycloak-backup
-  - sonarqube-backup
 
 patches:
   # Use talos01-specific Vault auth path

@@ -65,8 +65,7 @@ spec:
 
                   # Backup each database
                   for DB_SPEC in "gitea:gitea-postgres.gitea.svc:gitea:GITEA" \
-                                 "keycloak:keycloak-postgres.keycloak.svc:keycloack:KEYCLOAK" \
-                                 "sonarqube:sonarqube-postgres.sonarqube.svc:sonarqube:SONARQUBE"; do
+                                 "keycloak:keycloak-postgres.keycloak.svc:keycloack:KEYCLOAK"; do
                     DB_NAME=$(echo "$DB_SPEC" | cut -d: -f1)
                     DB_HOST=$(echo "$DB_SPEC" | cut -d: -f2)
                     DB_USER=$(echo "$DB_SPEC" | cut -d: -f3)
@@ -120,11 +119,6 @@ spec:
                   valueFrom:
                     secretKeyRef:
                       name: keycloak-db-password
-                      key: password
-                - name: SONARQUBE_DB_PASSWORD
-                  valueFrom:
-                    secretKeyRef:
-                      name: sonarqube-db-password
                       key: password
               volumeMounts:
                 - name: tools
