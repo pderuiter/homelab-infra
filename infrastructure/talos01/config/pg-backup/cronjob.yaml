@@ -64,8 +64,7 @@ spec:
                   $MC ls "backup/$BUCKET" > /dev/null
 
                   # Backup each database
-                  for DB_SPEC in "gitea:gitea-postgres.gitea.svc:gitea:GITEA" \
-                                 "keycloak:keycloak-postgres.keycloak.svc:keycloack:KEYCLOAK"; do
+                  for DB_SPEC in "keycloak:keycloak-postgres.keycloak.svc:keycloack:KEYCLOAK"; do
                     DB_NAME=$(echo "$DB_SPEC" | cut -d: -f1)
                     DB_HOST=$(echo "$DB_SPEC" | cut -d: -f2)
                     DB_USER=$(echo "$DB_SPEC" | cut -d: -f3)
@@ -110,11 +109,6 @@ spec:
                     secretKeyRef:
                       name: pg-backup-minio-credentials
                       key: MINIO_SECRET_KEY
-                - name: GITEA_DB_PASSWORD
-                  valueFrom:
-                    secretKeyRef:
-                      name: gitea-db-password
-                      key: password
                 - name: KEYCLOAK_DB_PASSWORD
                   valueFrom:
                     secretKeyRef:

@@ -11,13 +11,13 @@ resources:
   # Applications migrated from Docker host
   - minio
   - keycloak
-  - gitea
-  - nexus
-  # sonarqube - moved to arcturus (Docker), manifests kept for reference
+  # gitea, nexus, sonarqube - moved to arcturus (Docker), manifests kept for reference
+  # - gitea
+  # - nexus
   # - sonarqube
   # - sonarqube-backup
+  # - gitea-backup
   - netbird
-  - gitea-backup
   - keycloak-backup
 
 patches:
