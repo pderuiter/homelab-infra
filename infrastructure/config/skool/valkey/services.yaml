@@ -1,0 +1,40 @@
+---
+# Headless service for StatefulSet DNS resolution
+apiVersion: v1
+kind: Service
+metadata:
+  name: valkey
+  namespace: skool
+  labels:
+    app.kubernetes.io/name: skool
+    app.kubernetes.io/component: valkey
+spec:
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: skool
+    app.kubernetes.io/component: valkey
+  ports:
+    - port: 6379
+      targetPort: valkey
+      name: valkey
+    - port: 26379
+      targetPort: sentinel
+      name: sentinel
+---
+# Sentinel service for client discovery
+apiVersion: v1
+kind: Service
+metadata:
+  name: valkey-sentinel
+  namespace: skool
+  labels:
+    app.kubernetes.io/name: skool
+    app.kubernetes.io/component: valkey
+spec:
+  selector:
+    app.kubernetes.io/name: skool
+    app.kubernetes.io/component: valkey
+  ports:
+    - port: 26379
+      targetPort: sentinel
+      name: sentinel

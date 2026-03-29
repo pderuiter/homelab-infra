@@ -1,0 +1,41 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: valkey-config
+  namespace: skool
+  labels:
+    app.kubernetes.io/name: skool
+    app.kubernetes.io/component: valkey
+data:
+  valkey.conf: |
+    # Networking
+    bind 0.0.0.0
+    port 6379
+    protected-mode no
+
+    # Multi-threading (Valkey advantage over Redis)
+    io-threads 4
+    io-threads-do-reads yes
+
+    # Memory
+    maxmemory 384mb
+    maxmemory-policy allkeys-lru
+
+    # Persistence (RDB snapshots — lightweight)
+    # Needed for: JWT blocklist (security), BullMQ in-flight jobs
+    # Not needed for: cache, presence, rate limits (self-healing via TTL)
+    save 300 10
+    save 60 10000
+    dbfilename dump.rdb
+    dir /data
+    appendonly no
+
+    # Replication (replicas auto-configure via sentinel)
+    replica-read-only yes
+    replica-serve-stale-data yes
+
+    # Performance
+    tcp-keepalive 300
+    timeout 0
+    hz 10

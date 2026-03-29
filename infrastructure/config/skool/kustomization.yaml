@@ -8,6 +8,7 @@ resources:
   - db-migrate-job.yaml
   - db-rls-setup-job.yaml
   - redis.yaml
+  - valkey/
   - api.yaml
   - admin-api.yaml
   - web.yaml
