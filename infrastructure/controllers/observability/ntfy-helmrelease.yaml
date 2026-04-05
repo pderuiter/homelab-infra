@@ -64,12 +64,18 @@ spec:
           hosts:
             - ntfy.bsdserver.nl
 
-    # ntfy configuration
-    ntfy:
-      baseUrl: https://ntfy.bsdserver.nl
-      behindProxy: true
-      cacheDuration: 24h
-      keepaliveInterval: 45s
+    # ntfy server configuration (chart uses config.enabled + config.data)
+    config:
+      enabled: true
+      data:
+        base-url: "https://ntfy.bsdserver.nl"
+        behind-proxy: "true"
+        cache-duration: "24h"
+        keepalive-interval: "45s"
+        attachment-cache-dir: "/var/cache/ntfy/attachments"
+        attachment-total-size-limit: "100M"
+        attachment-file-size-limit: "1M"
+        attachment-expiry-duration: "1h"
 
     # Affinity
     affinity:
