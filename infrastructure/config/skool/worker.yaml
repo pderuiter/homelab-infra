@@ -27,6 +27,9 @@ spec:
           imagePullPolicy: Always
           command: ["tsx"]
           args: ["dist/worker.js"]
+          ports:
+            - name: metrics
+              containerPort: 9090
           env:
             - name: NODE_ENV
               value: production
@@ -59,3 +62,39 @@ spec:
               - matchExpressions:
                   - key: node-role.kubernetes.io/control-plane
                     operator: DoesNotExist
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: worker-metrics
+  namespace: skool
+  labels:
+    app.kubernetes.io/name: skool
+    app.kubernetes.io/component: worker
+spec:
+  selector:
+    app.kubernetes.io/name: skool
+    app.kubernetes.io/component: worker
+  ports:
+    - name: metrics
+      port: 9090
+      targetPort: metrics
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: skool-worker
+  namespace: skool
+  labels:
+    app.kubernetes.io/name: skool
+    app.kubernetes.io/component: worker
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: skool
+      app.kubernetes.io/component: worker
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: 30s

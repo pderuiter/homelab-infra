@@ -40,7 +40,7 @@ data:
             "type": "timeseries",
             "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
             "targets": [{
-              "expr": "sum(rate(skool_queue_jobs_completed_total{job=\"api\"}[5m])) by (queue)",
+              "expr": "sum(rate(skool_queue_jobs_completed_total{job=~\"api|skool/skool-worker\"}[5m])) by (queue)",
               "legendFormat": "{{queue}}"
             }],
             "fieldConfig": { "defaults": { "unit": "ops" } }
@@ -50,7 +50,7 @@ data:
             "type": "timeseries",
             "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
             "targets": [{
-              "expr": "sum(rate(skool_queue_jobs_failed_total{job=\"api\"}[5m])) by (queue)",
+              "expr": "sum(rate(skool_queue_jobs_failed_total{job=~\"api|skool/skool-worker\"}[5m])) by (queue)",
               "legendFormat": "{{queue}}"
             }],
             "fieldConfig": { "defaults": { "unit": "ops" } }
@@ -60,7 +60,7 @@ data:
             "type": "timeseries",
             "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
             "targets": [{
-              "expr": "histogram_quantile(0.95, sum(rate(skool_queue_job_duration_seconds_bucket{job=\"api\"}[5m])) by (le, queue))",
+              "expr": "histogram_quantile(0.95, sum(rate(skool_queue_job_duration_seconds_bucket{job=~\"api|skool/skool-worker\"}[5m])) by (le, queue))",
               "legendFormat": "{{queue}} P95"
             }],
             "fieldConfig": { "defaults": { "unit": "s" } }
