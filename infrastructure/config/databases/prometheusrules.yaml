@@ -162,16 +162,17 @@ spec:
             summary: "Backup stale for {{ $labels.cluster }}"
             description: "The last successful backup for cluster {{ $labels.cluster }} is older than 24 hours."
 
-        # WAL archiving behind
+        # WAL archiving behind - use increase() to only fire on NEW failures,
+        # not stale cumulative counter values from bootstrap/recovery
         - alert: CNPGWALArchivingBehind
           expr: |
-            cnpg_pg_stat_archiver_failed_count{namespace="databases"} > 0
+            increase(cnpg_pg_stat_archiver_failed_count{namespace="databases"}[5m]) > 0
           for: 5m
           labels:
             severity: warning
           annotations:
             summary: "WAL archiving issues in {{ $labels.cluster }}"
-            description: "WAL archiving for cluster {{ $labels.cluster }} has {{ $value }} failed archive attempts."
+            description: "WAL archiving for cluster {{ $labels.cluster }} has {{ $value | printf \"%.0f\" }} new failed archive attempts in the last 5 minutes."
 
     - name: cnpg.performance
       rules:
