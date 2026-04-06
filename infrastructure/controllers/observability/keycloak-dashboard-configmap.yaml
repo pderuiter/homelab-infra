@@ -3233,6 +3233,42 @@ data:
           ],
           "title": "Approximate number of threads blocked, waiting to acquire a connection",
           "type": "stat"
+        },
+        {
+          "datasource": "Loki",
+          "description": "",
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 56
+          },
+          "id": 9999,
+          "options": {
+            "dedupStrategy": "none",
+            "enableLogDetails": true,
+            "prettifyLogMessage": false,
+            "showCommonLabels": false,
+            "showLabels": false,
+            "showTime": true,
+            "sortOrder": "Descending",
+            "wrapLogMessage": false
+          },
+          "targets": [
+            {
+              "datasource": "Loki",
+              "editorMode": "code",
+              "expr": "{namespace=\"keycloak\", container=\"keycloak\"}",
+              "queryType": "range",
+              "refId": "A"
+            }
+          ],
+          "title": "Keycloak Logs",
+          "type": "logs"
         }
       ],
       "refresh": "1m",

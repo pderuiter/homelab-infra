@@ -93,6 +93,42 @@ data:
               "legendFormat": "Total req/s"
             }],
             "fieldConfig": { "defaults": { "unit": "reqps" } }
+          },
+          {
+            "datasource": "Loki",
+            "description": "",
+            "fieldConfig": {
+              "defaults": {},
+              "overrides": []
+            },
+            "gridPos": {
+              "h": 8,
+              "w": 24,
+              "x": 0,
+              "y": 20
+            },
+            "id": 9999,
+            "options": {
+              "dedupStrategy": "none",
+              "enableLogDetails": true,
+              "prettifyLogMessage": false,
+              "showCommonLabels": false,
+              "showLabels": false,
+              "showTime": true,
+              "sortOrder": "Descending",
+              "wrapLogMessage": false
+            },
+            "targets": [
+              {
+                "datasource": "Loki",
+                "editorMode": "code",
+                "expr": "{namespace=\"skool\", container=~\"api|admin-api|worker\"}",
+                "queryType": "range",
+                "refId": "A"
+              }
+            ],
+            "title": "Application Logs",
+            "type": "logs"
           }
         ],
         "templating": { "list": [] },

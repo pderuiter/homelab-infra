@@ -17,6 +17,10 @@ resources:
   - traefik-helmrepository.yaml
   - traefik-helmrelease.yaml
   - traefik-api-service.yaml
+  # Alloy observability agent
+  - alloy-namespace.yaml
+  - alloy-helmrepository.yaml
+  - alloy-helmrelease.yaml
 
 patches:
   # MetalLB: speaker needs privileged PodSecurity (NET_ADMIN, NET_RAW, SYS_ADMIN, hostNetwork)

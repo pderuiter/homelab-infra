@@ -84,6 +84,42 @@ data:
               "legendFormat": "P95 response size"
             }],
             "fieldConfig": { "defaults": { "unit": "bytes" } }
+          },
+          {
+            "datasource": "Loki",
+            "description": "",
+            "fieldConfig": {
+              "defaults": {},
+              "overrides": []
+            },
+            "gridPos": {
+              "h": 8,
+              "w": 24,
+              "x": 0,
+              "y": 24
+            },
+            "id": 9999,
+            "options": {
+              "dedupStrategy": "none",
+              "enableLogDetails": true,
+              "prettifyLogMessage": false,
+              "showCommonLabels": false,
+              "showLabels": false,
+              "showTime": true,
+              "sortOrder": "Descending",
+              "wrapLogMessage": false
+            },
+            "targets": [
+              {
+                "datasource": "Loki",
+                "editorMode": "code",
+                "expr": "{namespace=\"skool\", container=~\"api|admin-api\"}",
+                "queryType": "range",
+                "refId": "A"
+              }
+            ],
+            "title": "Cache Logs",
+            "type": "logs"
           }
         ],
         "templating": { "list": [] },

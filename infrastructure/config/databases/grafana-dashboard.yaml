@@ -8468,6 +8468,42 @@ data:
           ],
           "title": "Operator",
           "type": "row"
+        },
+        {
+          "datasource": "Loki",
+          "description": "",
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 89
+          },
+          "id": 9999,
+          "options": {
+            "dedupStrategy": "none",
+            "enableLogDetails": true,
+            "prettifyLogMessage": false,
+            "showCommonLabels": false,
+            "showLabels": false,
+            "showTime": true,
+            "sortOrder": "Descending",
+            "wrapLogMessage": false
+          },
+          "targets": [
+            {
+              "datasource": "Loki",
+              "editorMode": "code",
+              "expr": "{namespace=\"databases\", container=\"postgres\"}",
+              "queryType": "range",
+              "refId": "A"
+            }
+          ],
+          "title": "PostgreSQL Logs",
+          "type": "logs"
         }
       ],
       "refresh": "30s",

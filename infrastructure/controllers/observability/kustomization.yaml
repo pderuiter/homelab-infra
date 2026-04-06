@@ -19,3 +19,4 @@ resources:
   - ntfy-helmrelease.yaml
   - homelab-prometheusrules.yaml
   - flux-notifications.yaml
+  - loki-ingress.yaml

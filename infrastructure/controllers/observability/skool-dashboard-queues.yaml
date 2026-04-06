@@ -64,6 +64,42 @@ data:
               "legendFormat": "{{queue}} P95"
             }],
             "fieldConfig": { "defaults": { "unit": "s" } }
+          },
+          {
+            "datasource": "Loki",
+            "description": "",
+            "fieldConfig": {
+              "defaults": {},
+              "overrides": []
+            },
+            "gridPos": {
+              "h": 8,
+              "w": 24,
+              "x": 0,
+              "y": 24
+            },
+            "id": 9999,
+            "options": {
+              "dedupStrategy": "none",
+              "enableLogDetails": true,
+              "prettifyLogMessage": false,
+              "showCommonLabels": false,
+              "showLabels": false,
+              "showTime": true,
+              "sortOrder": "Descending",
+              "wrapLogMessage": false
+            },
+            "targets": [
+              {
+                "datasource": "Loki",
+                "editorMode": "code",
+                "expr": "{namespace=\"skool\", container=\"worker\"}",
+                "queryType": "range",
+                "refId": "A"
+              }
+            ],
+            "title": "Worker Logs",
+            "type": "logs"
           }
         ],
         "templating": { "list": [] },
