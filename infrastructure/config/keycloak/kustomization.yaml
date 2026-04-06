@@ -6,7 +6,7 @@ resources:
   - externalsecrets.yaml
   - keycloak.yaml
   - ingress.yaml
-  - servicemonitor.yaml
+  # ServiceMonitor removed — Keycloak migrated to talos01, now scraped via additionalScrapeConfig
 configMapGenerator:
   - name: keycloak-realm-import
     files:

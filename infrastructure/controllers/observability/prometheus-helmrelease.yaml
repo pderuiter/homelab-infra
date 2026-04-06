@@ -70,6 +70,18 @@ spec:
             static_configs:
               - targets: ['minio.minio.svc:9000']
 
+          # Keycloak metrics (running on talos01 cluster)
+          - job_name: 'keycloak'
+            metrics_path: /metrics
+            scheme: https
+            tls_config:
+              insecure_skip_verify: true
+            static_configs:
+              - targets: ['keycloak.bsdserver.nl']
+                labels:
+                  instance: 'keycloak'
+                  namespace: 'keycloak'
+
           # Pangolin VPS Traefik metrics (external tunnel gateway)
           - job_name: 'pangolin-traefik'
             static_configs:
