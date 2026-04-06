@@ -77,15 +77,12 @@ spec:
   superuserSecret:
     name: postgres-superuser-credentials
 
-  # Bootstrap the cluster
+  # Bootstrap - cluster was recovered, keep recovery spec to match live state
   bootstrap:
-    initdb:
+    recovery:
       database: app
       owner: app
-      secret:
-        name: postgres-app-credentials
-      postInitSQL:
-        - CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+      source: postgres-cluster
 
   # Storage configuration
   storage:
@@ -98,7 +95,8 @@ spec:
   # Separate WAL storage for better performance
   walStorage:
     storageClass: longhorn-database
-    size: 5Gi
+    size: 20Gi
+    resizeInUseVolumes: true
     pvcTemplate:
       accessModes:
         - ReadWriteOnce
@@ -106,7 +104,7 @@ spec:
   # Backup configuration to MinIO
   backup:
     barmanObjectStore:
-      destinationPath: s3://cnpg-backups/postgres-cluster
+      destinationPath: s3://cnpg-backups/postgres-cluster-v2
       endpointURL: http://minio.minio.svc.cluster.local:9000
       s3Credentials:
         accessKeyId:
@@ -151,3 +149,20 @@ spec:
   # Automatic failover
   failoverDelay: 0
   switchoverDelay: 30
+
+  # External cluster source for recovery bootstrap
+  externalClusters:
+    - name: postgres-cluster
+      barmanObjectStore:
+        destinationPath: s3://cnpg-backups/postgres-cluster
+        endpointURL: http://minio.minio.svc.cluster.local:9000
+        s3Credentials:
+          accessKeyId:
+            name: cnpg-minio-credentials
+            key: ACCESS_KEY_ID
+          secretAccessKey:
+            name: cnpg-minio-credentials
+            key: SECRET_ACCESS_KEY
+        wal:
+          compression: gzip
+          maxParallel: 2
