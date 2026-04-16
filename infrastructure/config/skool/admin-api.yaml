@@ -40,6 +40,8 @@ spec:
                 name: skool-db-credentials
             - secretRef:
                 name: skool-api-secrets
+            - secretRef:
+                name: skool-pipeline-secrets
           resources:
             requests:
               cpu: 50m
