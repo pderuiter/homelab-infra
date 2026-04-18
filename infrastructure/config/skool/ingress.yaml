@@ -26,6 +26,17 @@ spec:
                 name: api
                 port:
                   name: http
+          # Admin API — pipeline ingest + admin panel routes.
+          # Secured by pipelineAuthMiddleware (X-Pipeline-Token header) and
+          # adminAuthMiddleware (JWT) respectively. Public API has no routes
+          # under /api/admin so the path prefix is unambiguous.
+          - path: /api/admin
+            pathType: Prefix
+            backend:
+              service:
+                name: admin-api
+                port:
+                  name: http
           # WebSocket/Socket.IO route
           - path: /socket.io
             pathType: Prefix
