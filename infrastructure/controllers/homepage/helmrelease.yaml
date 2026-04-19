@@ -62,10 +62,10 @@ spec:
                 - abbr: GH
                   href: https://github.com/pderuiter
                   icon: si-github
-            - Gitea:
-                - abbr: GT
-                  href: https://gitea.bsdserver.nl
-                  icon: gitea.png
+            - GitLab:
+                - abbr: GL
+                  href: https://gitlab.bsdserver.nl
+                  icon: gitlab.png
 
         - Kubernetes Docs:
             - Kubernetes:
@@ -126,10 +126,10 @@ spec:
                 - abbr: HA
                   href: https://www.haproxy.com/documentation/
                   icon: haproxy.png
-            - Gitea:
-                - abbr: GT
-                  href: https://docs.gitea.com/
-                  icon: gitea.png
+            - GitLab:
+                - abbr: GL
+                  href: https://docs.gitlab.com/
+                  icon: gitlab.png
 
       services:
         - Infrastructure:
@@ -179,6 +179,15 @@ spec:
                 icon: consul.png
                 description: Service Discovery & Config
 
+            - OpenLDAP:
+                icon: openldap.png
+                description: Directory Service (Kerberos/LDAP)
+
+            - LDAP Admin:
+                href: https://ldapadmin.bsdserver.nl
+                icon: openldap.png
+                description: LDAP Management UI
+
         - Monitoring:
             - Grafana:
                 href: https://grafana.bsdserver.nl
@@ -206,9 +215,9 @@ spec:
                 icon: ghost.png
                 description: Blog Platform
 
-            - Gitea:
-                href: https://gitea.bsdserver.nl
-                icon: gitea.png
+            - GitLab:
+                href: https://gitlab.bsdserver.nl
+                icon: gitlab.png
                 description: Git Server
 
             - SearXNG:
@@ -264,6 +273,35 @@ spec:
                 icon: web-check.png
                 description: Website OSINT Analyzer
 
+        - Mail Platform:
+            - Mail Admin:
+                href: https://admin.webuildyourcloud.eu
+                icon: mailu.png
+                description: Mail Server Administration
+
+            - Grafana (Mail):
+                href: https://admin.webuildyourcloud.eu/grafana/
+                icon: grafana.png
+                description: Mail Metrics & Dashboards
+
+            - Rspamd:
+                href: https://admin.webuildyourcloud.eu/rspamd/#status
+                icon: rspamd.png
+                description: Spam Filtering & Statistics
+
+            - Webmail:
+                href: https://mail.webuildyourcloud.eu
+                icon: roundcube.png
+                description: Webmail Client
+
+            - MX Server:
+                icon: smtp.png
+                description: mx.webuildyourcloud.eu (SMTP Inbound)
+
+            - SMTP Relay:
+                icon: smtp.png
+                description: smtp.webuildyourcloud.eu (SMTP Outbound)
+
         - External:
             - Pangolin:
                 href: https://pangolin.bsdserver.nl
@@ -309,7 +347,7 @@ spec:
         layout:
           Infrastructure:
             style: row
-            columns: 4
+            columns: 5
           Monitoring:
             style: row
             columns: 4
@@ -325,6 +363,9 @@ spec:
           Tools:
             style: row
             columns: 2
+          Mail Platform:
+            style: row
+            columns: 3
           External:
             style: row
             columns: 2
