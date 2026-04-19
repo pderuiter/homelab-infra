@@ -4,7 +4,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: skool-db-migrate-v2
+  name: skool-db-migrate-v3
   namespace: skool
   labels:
     app.kubernetes.io/name: skool
@@ -23,9 +23,7 @@ spec:
           command: ["sh", "-c"]
           args:
             - |
-              cp -r /app/node_modules/.pnpm/@skool+db*/node_modules/@skool/db/dist/migrations/ /migrations/ 2>/dev/null || \
-              find /app -path "*/packages/db/src/migrations" -exec cp -r {} /migrations/ \; 2>/dev/null || \
-              find /app -name "*.sql" -path "*/migrations/*" -exec cp {} /migrations/ \; 2>/dev/null
+              find /app -name "*.sql" -path "*/migrations/*" -exec cp {} /migrations/ \;
               ls -la /migrations/ || echo "No migrations found"
           volumeMounts:
             - name: migrations
