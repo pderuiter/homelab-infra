@@ -4,7 +4,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: skool-db-migrate-v1
+  name: skool-db-migrate-v2
   namespace: skool
   labels:
     app.kubernetes.io/name: skool
@@ -18,7 +18,7 @@ spec:
       initContainers:
         # Pull the latest API image to get the migration files
         - name: copy-migrations
-          image: nexus.bsdserver.nl/docker-registry/wbyc/docker-skool-api:latest
+          image: nexus.bsdserver.nl/docker-registry/wbyc/docker-skool-api:1.29.14
           imagePullPolicy: Always
           command: ["sh", "-c"]
           args:
