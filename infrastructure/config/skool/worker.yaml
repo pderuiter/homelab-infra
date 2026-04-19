@@ -23,7 +23,7 @@ spec:
         - name: skool-registry-credentials
       containers:
         - name: worker
-          image: nexus.bsdserver.nl/docker-registry/wbyc/docker-skool-api:1.29.12
+          image: nexus.bsdserver.nl/docker-registry/wbyc/docker-skool-api:1.29.14
           imagePullPolicy: Always
           command: ["tsx"]
           args: ["dist/worker.js"]

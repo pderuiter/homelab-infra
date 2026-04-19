@@ -23,7 +23,7 @@ spec:
         - name: skool-registry-credentials
       containers:
         - name: admin-api
-          image: nexus.bsdserver.nl/docker-registry/wbyc/docker-skool-admin_api:1.29.12
+          image: nexus.bsdserver.nl/docker-registry/wbyc/docker-skool-admin_api:1.29.14
           imagePullPolicy: Always
           ports:
             - containerPort: 4001
