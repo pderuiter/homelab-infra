@@ -6,8 +6,6 @@ PROGRESS.md
 # Documentation - local analysis and planning docs
 docs/
 
-# Infrastructure manifests managed by Flux
-infrastructure/
 
 # Ansible inventory contains node IPs and credentials
 ansible/inventory.ini
