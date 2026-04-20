@@ -76,6 +76,8 @@ spec:
         attachment-total-size-limit: "100M"
         attachment-file-size-limit: "1M"
         attachment-expiry-duration: "1h"
+        enable-login: "true"
+        enable-signup: "false"
 
     # Affinity
     affinity:
