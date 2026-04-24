@@ -15,6 +15,7 @@ resources:
   - skool-dashboard-queues.yaml
   - skool-dashboard-cache.yaml
   - skool-dashboard-business.yaml
+  - openldap-dashboard-configmap.yaml
   # traefik-dashboard-configmap.yaml removed - duplicate of Helm-provisioned dashboard
   - ntfy-helmrelease.yaml
   - homelab-prometheusrules.yaml

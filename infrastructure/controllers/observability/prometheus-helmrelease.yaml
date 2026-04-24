@@ -90,6 +90,14 @@ spec:
                   instance: 'pangolin-vps'
                   environment: 'external'
 
+          # OpenLDAP metrics (multi-master replication pair)
+          - job_name: 'openldap'
+            scrape_interval: 30s
+            static_configs:
+              - targets: ['192.168.2.4:9330', '192.168.2.5:9330']
+                labels:
+                  environment: 'infrastructure'
+
         # Pod affinity - schedule on workers
         affinity:
           nodeAffinity:

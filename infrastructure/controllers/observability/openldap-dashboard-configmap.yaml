@@ -1,0 +1,867 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-openldap
+  namespace: observability
+  labels:
+    grafana_dashboard: "1"
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/instance: grafana
+data:
+  openldap-dashboard.json: |
+    {
+      "annotations": {
+        "list": [
+          {
+            "builtIn": 1,
+            "datasource": {
+              "type": "grafana",
+              "uid": "-- Grafana --"
+            },
+            "enable": true,
+            "hide": true,
+            "iconColor": "rgba(0, 211, 255, 1)",
+            "name": "Annotations & Alerts",
+            "type": "dashboard"
+          }
+        ]
+      },
+      "description": "OpenLDAP monitoring dashboard \u2014 connections, operations, replication, and system metrics",
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 1,
+      "links": [],
+      "panels": [
+        {
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 0
+          },
+          "id": 100,
+          "title": "Overview",
+          "type": "row"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            }
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 0,
+            "y": 1
+          },
+          "id": 1,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto"
+          },
+          "title": "Uptime",
+          "type": "stat",
+          "targets": [
+            {
+              "expr": "openldap_monitored_object{dn=\"cn=Uptime,cn=Time,cn=Monitor\",instance=~\"$instance\"}",
+              "legendFormat": "{{ instance }}",
+              "refId": "A"
+            }
+          ],
+          "transformations": [
+            {
+              "id": "convertFieldType",
+              "options": {
+                "conversions": [
+                  {
+                    "targetField": "Value",
+                    "destinationType": "number"
+                  }
+                ],
+                "fields": {}
+              }
+            }
+          ]
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 50
+                  },
+                  {
+                    "color": "red",
+                    "value": 100
+                  }
+                ]
+              }
+            }
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 4,
+            "y": 1
+          },
+          "id": 2,
+          "title": "Current Connections",
+          "type": "stat",
+          "targets": [
+            {
+              "expr": "openldap_monitor_counter_object{dn=\"cn=Current,cn=Connections,cn=Monitor\",instance=~\"$instance\"}",
+              "legendFormat": "{{ instance }}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            }
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 8,
+            "y": 1
+          },
+          "id": 3,
+          "title": "Total Connections",
+          "type": "stat",
+          "targets": [
+            {
+              "expr": "openldap_monitor_counter_object{dn=\"cn=Total,cn=Connections,cn=Monitor\",instance=~\"$instance\"}",
+              "legendFormat": "{{ instance }}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            }
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 12,
+            "y": 1
+          },
+          "id": 4,
+          "title": "Threads Active",
+          "type": "stat",
+          "targets": [
+            {
+              "expr": "openldap_monitored_object{dn=\"cn=Active,cn=Threads,cn=Monitor\",instance=~\"$instance\"}",
+              "legendFormat": "{{ instance }}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            }
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 16,
+            "y": 1
+          },
+          "id": 5,
+          "title": "Entries",
+          "type": "stat",
+          "targets": [
+            {
+              "expr": "openldap_monitor_counter_object{dn=\"cn=Entries,cn=Statistics,cn=Monitor\",instance=~\"$instance\"}",
+              "legendFormat": "{{ instance }}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 1
+                  }
+                ]
+              }
+            }
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 20,
+            "y": 1
+          },
+          "id": 6,
+          "title": "Scrape Errors",
+          "type": "stat",
+          "targets": [
+            {
+              "expr": "rate(openldap_scrape{result=\"err\",instance=~\"$instance\"}[5m])",
+              "legendFormat": "{{ instance }}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 5
+          },
+          "id": 101,
+          "title": "Operations",
+          "type": "row"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisLabel": "ops/sec",
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineWidth": 2,
+                "pointSize": 5,
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "unit": "ops"
+            }
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 6
+          },
+          "id": 10,
+          "title": "Operations Rate",
+          "type": "timeseries",
+          "targets": [
+            {
+              "expr": "rate(openldap_monitor_operation{dn=~\"cn=Bind,.*\",instance=~\"$instance\"}[5m])",
+              "legendFormat": "{{ instance }} \u2014 Bind",
+              "refId": "A"
+            },
+            {
+              "expr": "rate(openldap_monitor_operation{dn=~\"cn=Search,.*\",instance=~\"$instance\"}[5m])",
+              "legendFormat": "{{ instance }} \u2014 Search",
+              "refId": "B"
+            },
+            {
+              "expr": "rate(openldap_monitor_operation{dn=~\"cn=Modify,.*\",instance=~\"$instance\"}[5m])",
+              "legendFormat": "{{ instance }} \u2014 Modify",
+              "refId": "C"
+            },
+            {
+              "expr": "rate(openldap_monitor_operation{dn=~\"cn=Add,.*\",instance=~\"$instance\"}[5m])",
+              "legendFormat": "{{ instance }} \u2014 Add",
+              "refId": "D"
+            },
+            {
+              "expr": "rate(openldap_monitor_operation{dn=~\"cn=Delete,.*\",instance=~\"$instance\"}[5m])",
+              "legendFormat": "{{ instance }} \u2014 Delete",
+              "refId": "E"
+            }
+          ]
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisLabel": "total",
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineWidth": 2,
+                "pointSize": 5,
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "unit": "short"
+            }
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 6
+          },
+          "id": 11,
+          "title": "Operations Total (Cumulative)",
+          "type": "timeseries",
+          "targets": [
+            {
+              "expr": "openldap_monitor_operation{dn=~\"cn=Bind,.*\",instance=~\"$instance\"}",
+              "legendFormat": "{{ instance }} \u2014 Bind",
+              "refId": "A"
+            },
+            {
+              "expr": "openldap_monitor_operation{dn=~\"cn=Search,.*\",instance=~\"$instance\"}",
+              "legendFormat": "{{ instance }} \u2014 Search",
+              "refId": "B"
+            },
+            {
+              "expr": "openldap_monitor_operation{dn=~\"cn=Modify,.*\",instance=~\"$instance\"}",
+              "legendFormat": "{{ instance }} \u2014 Modify",
+              "refId": "C"
+            },
+            {
+              "expr": "openldap_monitor_operation{dn=~\"cn=Unbind,.*\",instance=~\"$instance\"}",
+              "legendFormat": "{{ instance }} \u2014 Unbind",
+              "refId": "D"
+            }
+          ]
+        },
+        {
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 14
+          },
+          "id": 102,
+          "title": "Connections & Traffic",
+          "type": "row"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineWidth": 2,
+                "pointSize": 5,
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "unit": "short"
+            }
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 15
+          },
+          "id": 20,
+          "title": "Current Connections",
+          "type": "timeseries",
+          "targets": [
+            {
+              "expr": "openldap_monitor_counter_object{dn=\"cn=Current,cn=Connections,cn=Monitor\",instance=~\"$instance\"}",
+              "legendFormat": "{{ instance }}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineWidth": 2,
+                "pointSize": 5,
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "unit": "Bps"
+            }
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 15
+          },
+          "id": 21,
+          "title": "Traffic (Bytes/sec)",
+          "type": "timeseries",
+          "targets": [
+            {
+              "expr": "rate(openldap_monitor_counter_object{dn=\"cn=Bytes,cn=Statistics,cn=Monitor\",instance=~\"$instance\"}[5m])",
+              "legendFormat": "{{ instance }} \u2014 Bytes",
+              "refId": "A"
+            },
+            {
+              "expr": "rate(openldap_monitor_counter_object{dn=\"cn=PDU,cn=Statistics,cn=Monitor\",instance=~\"$instance\"}[5m])",
+              "legendFormat": "{{ instance }} \u2014 PDU",
+              "refId": "B"
+            }
+          ]
+        },
+        {
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 23
+          },
+          "id": 103,
+          "title": "Replication",
+          "type": "row"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "description": "contextCSN values from each node. Both nodes should have identical or near-identical values. A divergence indicates replication lag.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineWidth": 2,
+                "pointSize": 5,
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "unit": "short"
+            }
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 24
+          },
+          "id": 30,
+          "title": "Replication CSN (contextCSN)",
+          "type": "timeseries",
+          "targets": [
+            {
+              "expr": "openldap_monitor_replication_object{instance=~\"$instance\"}",
+              "legendFormat": "{{ instance }} \u2014 {{ dn }}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "description": "Difference between the two nodes' contextCSN timestamps. Should be close to 0. High values indicate replication delay.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 5
+                  },
+                  {
+                    "color": "red",
+                    "value": 30
+                  }
+                ]
+              },
+              "unit": "s"
+            }
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 24
+          },
+          "id": 31,
+          "title": "Replication Lag (seconds between nodes)",
+          "type": "timeseries",
+          "targets": [
+            {
+              "expr": "abs(openldap_monitor_replication_object{instance=~\".*:9330\"} - on() group_left openldap_monitor_replication_object{instance=~\".*:9330\"})",
+              "legendFormat": "lag",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 32
+          },
+          "id": 104,
+          "title": "System Resources",
+          "type": "row"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineWidth": 2,
+                "pointSize": 5,
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "unit": "short"
+            }
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 0,
+            "y": 33
+          },
+          "id": 40,
+          "title": "Threads",
+          "type": "timeseries",
+          "targets": [
+            {
+              "expr": "openldap_monitored_object{dn=\"cn=Active,cn=Threads,cn=Monitor\",instance=~\"$instance\"}",
+              "legendFormat": "{{ instance }} \u2014 Active",
+              "refId": "A"
+            },
+            {
+              "expr": "openldap_monitored_object{dn=\"cn=Open,cn=Threads,cn=Monitor\",instance=~\"$instance\"}",
+              "legendFormat": "{{ instance }} \u2014 Open",
+              "refId": "B"
+            },
+            {
+              "expr": "openldap_monitored_object{dn=\"cn=Pending,cn=Threads,cn=Monitor\",instance=~\"$instance\"}",
+              "legendFormat": "{{ instance }} \u2014 Pending",
+              "refId": "C"
+            },
+            {
+              "expr": "openldap_monitored_object{dn=\"cn=Starting,cn=Threads,cn=Monitor\",instance=~\"$instance\"}",
+              "legendFormat": "{{ instance }} \u2014 Starting",
+              "refId": "D"
+            }
+          ]
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineWidth": 2,
+                "pointSize": 5,
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "unit": "short"
+            }
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 8,
+            "y": 33
+          },
+          "id": 41,
+          "title": "Waiters",
+          "type": "timeseries",
+          "targets": [
+            {
+              "expr": "openldap_monitored_object{dn=\"cn=Read,cn=Waiters,cn=Monitor\",instance=~\"$instance\"}",
+              "legendFormat": "{{ instance }} \u2014 Read",
+              "refId": "A"
+            },
+            {
+              "expr": "openldap_monitored_object{dn=\"cn=Write,cn=Waiters,cn=Monitor\",instance=~\"$instance\"}",
+              "legendFormat": "{{ instance }} \u2014 Write",
+              "refId": "B"
+            }
+          ]
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineWidth": 2,
+                "pointSize": 5,
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                }
+              },
+              "unit": "short"
+            }
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 16,
+            "y": 33
+          },
+          "id": 42,
+          "title": "Referrals & Statistics",
+          "type": "timeseries",
+          "targets": [
+            {
+              "expr": "rate(openldap_monitor_counter_object{dn=\"cn=Referrals,cn=Statistics,cn=Monitor\",instance=~\"$instance\"}[5m])",
+              "legendFormat": "{{ instance }} \u2014 Referrals/s",
+              "refId": "A"
+            },
+            {
+              "expr": "rate(openldap_monitor_counter_object{dn=\"cn=Entries,cn=Statistics,cn=Monitor\",instance=~\"$instance\"}[5m])",
+              "legendFormat": "{{ instance }} \u2014 Entries/s",
+              "refId": "B"
+            }
+          ]
+        }
+      ],
+      "refresh": "30s",
+      "schemaVersion": 39,
+      "tags": [
+        "openldap",
+        "ldap",
+        "prometheus",
+        "infrastructure"
+      ],
+      "templating": {
+        "list": [
+          {
+            "current": {},
+            "hide": 0,
+            "includeAll": false,
+            "label": "Datasource",
+            "multi": false,
+            "name": "datasource",
+            "options": [],
+            "query": "prometheus",
+            "queryValue": "",
+            "refresh": 1,
+            "regex": "",
+            "skipUrlSync": false,
+            "type": "datasource"
+          },
+          {
+            "current": {},
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${datasource}"
+            },
+            "definition": "label_values(openldap_monitor_counter_object, instance)",
+            "hide": 0,
+            "includeAll": true,
+            "label": "Instance",
+            "multi": true,
+            "name": "instance",
+            "query": {
+              "query": "label_values(openldap_monitor_counter_object, instance)",
+              "refId": "StandardVariableQuery"
+            },
+            "refresh": 2,
+            "regex": "",
+            "skipUrlSync": false,
+            "sort": 1,
+            "type": "query"
+          }
+        ]
+      },
+      "time": {
+        "from": "now-6h",
+        "to": "now"
+      },
+      "timepicker": {},
+      "timezone": "browser",
+      "title": "OpenLDAP",
+      "uid": "openldap-monitoring",
+      "version": 1
+    }
