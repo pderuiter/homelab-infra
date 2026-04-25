@@ -560,7 +560,7 @@ data:
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "description": "contextCSN values from each node. Both nodes should have identical or near-identical values. A divergence indicates replication lag.",
+          "description": "Total entries returned by each node. Both nodes should track closely. Divergence indicates replication issues.",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -587,13 +587,23 @@ data:
             "y": 24
           },
           "id": 30,
-          "title": "Replication CSN (contextCSN)",
+          "title": "Entries per Node (replication health)",
           "type": "timeseries",
           "targets": [
             {
-              "expr": "openldap_monitor_replication_object{instance=~\"$instance\"}",
-              "legendFormat": "{{ instance }} \u2014 {{ dn }}",
+              "expr": "openldap_monitor_counter_object{dn=\"cn=Entries,cn=Statistics,cn=Monitor\",instance=~\"$instance\"}",
+              "legendFormat": "{{ instance }} \u2014 Entries",
               "refId": "A"
+            },
+            {
+              "expr": "openldap_monitor_operation{dn=\"cn=Add,cn=Operations,cn=Monitor\",instance=~\"$instance\"}",
+              "legendFormat": "{{ instance }} \u2014 Adds",
+              "refId": "B"
+            },
+            {
+              "expr": "openldap_monitor_operation{dn=\"cn=Modify,cn=Operations,cn=Monitor\",instance=~\"$instance\"}",
+              "legendFormat": "{{ instance }} \u2014 Modifies",
+              "refId": "C"
             }
           ]
         },
@@ -602,30 +612,24 @@ data:
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "description": "Difference between the two nodes' contextCSN timestamps. Should be close to 0. High values indicate replication delay.",
+          "description": "Difference in total connections and operations between nodes. Large differences may indicate one node is not receiving replicated traffic.",
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "thresholds"
+                "mode": "palette-classic"
               },
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "yellow",
-                    "value": 5
-                  },
-                  {
-                    "color": "red",
-                    "value": 30
-                  }
-                ]
+              "custom": {
+                "axisCenteredZero": false,
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineWidth": 2,
+                "pointSize": 5,
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                }
               },
-              "unit": "s"
+              "unit": "short"
             }
           },
           "gridPos": {
@@ -635,13 +639,18 @@ data:
             "y": 24
           },
           "id": 31,
-          "title": "Replication Lag (seconds between nodes)",
+          "title": "Connections per Node (balance)",
           "type": "timeseries",
           "targets": [
             {
-              "expr": "abs(openldap_monitor_replication_object{instance=~\".*:9330\"} - on() group_left openldap_monitor_replication_object{instance=~\".*:9330\"})",
-              "legendFormat": "lag",
+              "expr": "openldap_monitor_counter_object{dn=\"cn=Total,cn=Connections,cn=Monitor\",instance=~\"$instance\"}",
+              "legendFormat": "{{ instance }} \u2014 Total Connections",
               "refId": "A"
+            },
+            {
+              "expr": "openldap_monitor_counter_object{dn=\"cn=Current,cn=Connections,cn=Monitor\",instance=~\"$instance\"}",
+              "legendFormat": "{{ instance }} \u2014 Current",
+              "refId": "B"
             }
           ]
         },
@@ -748,12 +757,12 @@ data:
           "type": "timeseries",
           "targets": [
             {
-              "expr": "openldap_monitored_object{dn=\"cn=Read,cn=Waiters,cn=Monitor\",instance=~\"$instance\"}",
+              "expr": "openldap_monitor_counter_object{dn=\"cn=Read,cn=Waiters,cn=Monitor\",instance=~\"$instance\"}",
               "legendFormat": "{{ instance }} \u2014 Read",
               "refId": "A"
             },
             {
-              "expr": "openldap_monitored_object{dn=\"cn=Write,cn=Waiters,cn=Monitor\",instance=~\"$instance\"}",
+              "expr": "openldap_monitor_counter_object{dn=\"cn=Write,cn=Waiters,cn=Monitor\",instance=~\"$instance\"}",
               "legendFormat": "{{ instance }} \u2014 Write",
               "refId": "B"
             }
