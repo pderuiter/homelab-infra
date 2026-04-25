@@ -46,7 +46,7 @@ spec:
             - name: EMAIL_ENABLED
               value: "false"
             - name: NODES
-              value: "https://wbyc-srv-docker01.bsdserver.lan:8200,https://wbyc-srv-docker02.bsdserver.lan:8200,https://wbyc-srv-docker03.bsdserver.lan:8200"
+              value: "https://vault01.bsdserver.lan:8200,https://vault02.bsdserver.lan:8200,https://vault03.bsdserver.lan:8200"
             - name: TOKENS
               valueFrom:
                 secretKeyRef:
@@ -129,7 +129,7 @@ spec:
             - name: EMAIL_ENABLED
               value: "false"
             - name: NODES
-              value: "https://wbyc-srv-docker01.bsdserver.lan:8200,https://wbyc-srv-docker02.bsdserver.lan:8200,https://wbyc-srv-docker03.bsdserver.lan:8200"
+              value: "https://vault01.bsdserver.lan:8200,https://vault02.bsdserver.lan:8200,https://vault03.bsdserver.lan:8200"
             - name: TOKENS
               valueFrom:
                 secretKeyRef:
@@ -212,7 +212,7 @@ spec:
             - name: EMAIL_ENABLED
               value: "false"
             - name: NODES
-              value: "https://wbyc-srv-docker01.bsdserver.lan:8200,https://wbyc-srv-docker02.bsdserver.lan:8200,https://wbyc-srv-docker03.bsdserver.lan:8200"
+              value: "https://vault01.bsdserver.lan:8200,https://vault02.bsdserver.lan:8200,https://vault03.bsdserver.lan:8200"
             - name: TOKENS
               valueFrom:
                 secretKeyRef:
