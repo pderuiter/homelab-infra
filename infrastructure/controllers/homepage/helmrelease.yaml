@@ -175,7 +175,7 @@ spec:
                 description: IP Address Management
 
             - Consul:
-                href: https://wbyc-srv-docker01.bsdserver.lan:8501/
+                href: https://consul.bsdserver.lan:8501/
                 icon: consul.png
                 description: Service Discovery & Config
 
