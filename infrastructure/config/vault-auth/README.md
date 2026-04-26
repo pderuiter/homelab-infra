@@ -12,7 +12,7 @@ Run these commands on your Vault server or from a machine with Vault CLI access:
 
 ```bash
 # Set Vault address (if not already set)
-export VAULT_ADDR="https://wbyc-srv-docker01.bsdserver.lan:8200"
+export VAULT_ADDR="https://vault01.bsdserver.lan:8200"
 
 # Authenticate to Vault (use your preferred method)
 vault login
@@ -104,7 +104,7 @@ vault policy read external-secrets-dns
 
 ### TLS errors
 - The CA certificate in `vault-ca-configmap.yaml` must match Vault's TLS certificate
-- Verify with: `openssl s_client -connect wbyc-srv-docker01.bsdserver.lan:8200 -showcerts`
+- Verify with: `openssl s_client -connect vault01.bsdserver.lan:8200 -showcerts`
 
 ### Certificate Expiration
 
@@ -124,9 +124,10 @@ Vault TLS certificates are valid for 2 years. If certificates expire:
 2. Renew certificates on all Vault hosts using Ansible:
    ```bash
    # Vault hosts:
-   # - wbyc-srv-docker01 (192.168.2.170)
-   # - wbyc-srv-docker02 (192.168.2.171)
-   # - wbyc-srv-docker03 (192.168.2.172)
+   # - vault01 / wbyc-srv-infra01 (192.168.2.251)
+   # - vault02 / wbyc-srv-infra04 (192.168.2.4)
+   # - vault03 / wbyc-srv-infra05 (192.168.2.5)
+   # VIP: vault.bsdserver.lan (192.168.2.173)
 
    # Reference playbook location:
    # ~/GitHub/webuildyourcloud/automation/terraform/modules/infra-modules/terraform-vsphere-infra/ansible/roles/vault/tasks/certificates.yml
@@ -166,7 +167,7 @@ The ClusterSecretStore uses IP address (192.168.2.170) instead of hostname to av
             │
             ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    Vault (wbyc-srv-docker01.bsdserver.lan:8200)                   │
+│                    Vault (vault01.bsdserver.lan:8200)                   │
 │  ┌─────────────────┐    ┌─────────────────────────────────────┐ │
 │  │ Kubernetes Auth │    │   Policy: external-secrets-dns      │ │
 │  │   (validates    │───▶│   - read secret/data/dns            │ │
