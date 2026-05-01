@@ -295,11 +295,11 @@ spec:
                 description: Webmail Client
 
             - MX Server:
-                icon: smtp.png
+                icon: postfix.png
                 description: mx.webuildyourcloud.eu (SMTP Inbound)
 
             - SMTP Relay:
-                icon: smtp.png
+                icon: postfix.png
                 description: smtp.webuildyourcloud.eu (SMTP Outbound)
 
         - External:
