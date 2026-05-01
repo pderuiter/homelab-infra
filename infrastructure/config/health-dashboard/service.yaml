@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: health-dashboard
+  namespace: health-dashboard
+  labels:
+    app.kubernetes.io/name: health-dashboard
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: health-dashboard
