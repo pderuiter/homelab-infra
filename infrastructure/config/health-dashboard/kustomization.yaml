@@ -3,6 +3,7 @@ kind: Kustomization
 namespace: health-dashboard
 resources:
   - namespace.yaml
+  - externalsecret.yaml
   - pvc.yaml
   - deployment.yaml
   - service.yaml
