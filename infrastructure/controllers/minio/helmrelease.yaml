@@ -68,6 +68,11 @@ spec:
       ingressClassName: traefik
       annotations:
         cert-manager.io/cluster-issuer: letsencrypt-production
+        # Force internal DNS to publish the public Pangolin IP instead of the
+        # MetalLB IP. Avoids split-horizon DNS so LAN browsers don't trigger
+        # Private Network Access blocks (W3C spec, enforced by Safari, Chrome,
+        # Edge) when a page on a public origin references an asset on a private IP.
+        external-dns.alpha.kubernetes.io/target: "5.75.184.243"
       hosts:
         - minio-k8s.bsdserver.nl
       tls:
@@ -81,6 +86,7 @@ spec:
       ingressClassName: traefik
       annotations:
         cert-manager.io/cluster-issuer: letsencrypt-production
+        external-dns.alpha.kubernetes.io/target: "5.75.184.243"
       hosts:
         - minio-k8s-console.bsdserver.nl
       tls:
