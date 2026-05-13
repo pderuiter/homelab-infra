@@ -68,15 +68,15 @@ spec:
           cpu: 200m
           memory: 256Mi
 
-    # Collector configuration - actual usage: 323m CPU, 412Mi memory
+    # Collector configuration - 512Mi limit caused repeated OOMKills (469 restarts on worker01)
     collector:
       resources:
         requests:
           cpu: 200m
-          memory: 384Mi
+          memory: 512Mi
         limits:
           cpu: 500m
-          memory: 512Mi
+          memory: 1Gi
 
     # Guard configuration - actual usage: 1m CPU, 38Mi memory
     guard:
