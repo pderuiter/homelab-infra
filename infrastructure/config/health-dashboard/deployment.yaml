@@ -35,7 +35,7 @@ spec:
                     operator: DoesNotExist
       containers:
         - name: health-dashboard
-          image: nexus.bsdserver.nl:443/docker-registry/health-dashboard:d50d45d8
+          image: nexus.bsdserver.nl:443/docker-registry/health-dashboard:6048d7f7
           ports:
             - name: http
               containerPort: 5001
