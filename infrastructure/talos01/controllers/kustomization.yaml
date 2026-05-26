@@ -9,9 +9,14 @@ resources:
   - ../../controllers/local-path-provisioner
   - ../../controllers/metrics-server
   - ../../controllers/talos-backup
-  # external-dns-transip: ExternalSecret moved to config phase (needs ESO CRDs)
-  - external-dns-transip-namespace.yaml
-  - external-dns-transip-deployment.yaml
+  # external-dns-transip: disabled 2026-05-26. Talos cluster has no
+  # external-DNS-tagged ingresses, and running it here was racing the
+  # wbyc-k8s instance for the same TransIP zone (same txt-owner-id),
+  # which doubled auth-endpoint load and caused intermittent 503s
+  # and crash-looping. Re-enable with a distinct --txt-owner-id if
+  # Talos ever needs external DNS.
+  # - external-dns-transip-namespace.yaml
+  # - external-dns-transip-deployment.yaml
   # Traefik: Certificate/IngressRoute moved to config phase (needs cert-manager/Traefik CRDs)
   - traefik-namespace.yaml
   - traefik-helmrepository.yaml

@@ -6,7 +6,9 @@ resources:
   - ../../config/cert-manager
   - ../../config/external-dns
   # CRD-dependent resources deferred from controllers phase
-  - external-dns-transip-externalsecret.yaml
+  # external-dns-transip ExternalSecret: disabled with the deployment
+  # (see controllers/kustomization.yaml comment).
+  # - external-dns-transip-externalsecret.yaml
   - traefik-dashboard-ingressroute.yaml
   # Applications migrated from Docker host
   - minio
