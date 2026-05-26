@@ -191,8 +191,12 @@ spec:
             - name: PUBLIC_REGISTER_ENABLED
               value: "False"
           resources:
+            # CPU request reduced from 200m to fit in the
+            # heavily-overcommitted cluster while podAffinity pins
+            # this pod to taiga-async's node for the shared RWO
+            # volumes. Limit unchanged — bursts still allowed.
             requests:
-              cpu: 200m
+              cpu: 25m
               memory: 512Mi
             limits:
               cpu: 1000m
