@@ -181,6 +181,14 @@ spec:
                     username: alertmanager
                     password_file: /etc/alertmanager/secrets/ntfy-alertmanager/password
 
+    # kube-proxy metrics scrape disabled — Kubespray binds kube-proxy
+    # metrics to 127.0.0.1:10249, so the ServiceMonitor never gets a
+    # successful scrape and KubeProxyDown alert fires perpetually.
+    # Migration of this cluster to Talos (Cilium kube-proxy-replacement)
+    # is planned; revisit this flag if we end up sticking with kubeadm.
+    kubeProxy:
+      enabled: false
+
     # Node exporter
     prometheus-node-exporter:
       resources:
