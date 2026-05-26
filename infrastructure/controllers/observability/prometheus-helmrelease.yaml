@@ -236,7 +236,8 @@ spec:
         kubeApiserverSlos: true
         kubeControllerManager: true
         kubelet: true
-        kubeProxy: true
+        # kube-proxy rules disabled — see kubeProxy.enabled: false above
+        kubeProxy: false
         kubePrometheusGeneral: true
         kubePrometheusNodeRecording: true
         kubernetesApps: true
