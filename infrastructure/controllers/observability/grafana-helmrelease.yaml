@@ -84,6 +84,11 @@ spec:
         secretKeyRef:
           name: grafana-oidc
           key: client-secret
+      # ntfy publish credentials (used by provisioned contact point below)
+      NTFY_GRAFANA_PASSWORD:
+        secretKeyRef:
+          name: ntfy-grafana
+          key: password
 
     # Resources
     resources:
@@ -168,6 +173,24 @@ spec:
             editable: true
             options:
               path: /var/lib/grafana/dashboards/infrastructure
+
+    # Alerting contact point provisioning (ntfy webhook)
+    # Password is read from NTFY_GRAFANA_PASSWORD env var via $__env{} expansion
+    alerting:
+      contactpoints.yaml:
+        apiVersion: 1
+        contactPoints:
+          - orgId: 1
+            name: ntfy
+            receivers:
+              - uid: ntfy-receiver
+                type: webhook
+                disableResolveMessage: false
+                settings:
+                  url: http://ntfy.observability.svc.cluster.local/grafana
+                  httpMethod: POST
+                  username: grafana
+                  password: $__env{NTFY_GRAFANA_PASSWORD}
 
     # Dashboards from grafana.com
     dashboards:

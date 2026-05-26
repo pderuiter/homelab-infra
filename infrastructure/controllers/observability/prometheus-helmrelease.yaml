@@ -139,6 +139,9 @@ spec:
           limits:
             cpu: 200m
             memory: 256Mi
+        # Mount ntfy basic-auth secret at /etc/alertmanager/secrets/ntfy-alertmanager/
+        secrets:
+          - ntfy-alertmanager
 
       # Ingress for Alertmanager
       ingress:
@@ -173,6 +176,10 @@ spec:
             webhook_configs:
               - url: 'http://ntfy.observability.svc:80/alerts'
                 send_resolved: true
+                http_config:
+                  basic_auth:
+                    username: alertmanager
+                    password_file: /etc/alertmanager/secrets/ntfy-alertmanager/password
 
     # Node exporter
     prometheus-node-exporter:
