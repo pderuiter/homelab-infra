@@ -196,7 +196,7 @@ spec:
             # this pod to taiga-async's node for the shared RWO
             # volumes. Limit unchanged — bursts still allowed.
             requests:
-              cpu: 25m
+              cpu: 10m
               memory: 512Mi
             limits:
               cpu: 1000m
