@@ -188,7 +188,7 @@ spec:
           cpu: 50m
           memory: 32Mi
         limits:
-          cpu: 200m
+          cpu: 500m
           memory: 64Mi
 
     # Kube-state-metrics
