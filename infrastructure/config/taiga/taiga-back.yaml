@@ -77,6 +77,15 @@ spec:
               - matchExpressions:
                   - key: node-role.kubernetes.io/control-plane
                     operator: DoesNotExist
+        # Co-locate with taiga-async so the shared RWO PVCs
+        # (taiga-media, taiga-static) can be mounted on the same node.
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: taiga
+                  app.kubernetes.io/component: async
+              topologyKey: kubernetes.io/hostname
       initContainers:
         - name: wait-for-db
           image: postgres:17-alpine
