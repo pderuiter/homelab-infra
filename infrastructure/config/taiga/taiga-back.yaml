@@ -21,40 +21,6 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: taiga-media
-  namespace: taiga
-  labels:
-    app.kubernetes.io/name: taiga
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: longhorn
-  resources:
-    requests:
-      storage: 10Gi
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: taiga-static
-  namespace: taiga
-  labels:
-    app.kubernetes.io/name: taiga
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: longhorn
-  resources:
-    requests:
-      storage: 1Gi
----
-# RWX PVCs introduced 2026-05-26 — see commit B for the swap.
-# These start empty; a one-shot migration Job copies data from
-# taiga-media/taiga-static into these before the deployments
-# are switched over.
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
   name: taiga-media-rwx
   namespace: taiga
   labels:
@@ -111,15 +77,6 @@ spec:
               - matchExpressions:
                   - key: node-role.kubernetes.io/control-plane
                     operator: DoesNotExist
-        # Co-locate with taiga-async so the shared RWO PVCs
-        # (taiga-media, taiga-static) can be mounted on the same node.
-        podAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchLabels:
-                  app.kubernetes.io/name: taiga
-                  app.kubernetes.io/component: async
-              topologyKey: kubernetes.io/hostname
       initContainers:
         - name: wait-for-db
           image: postgres:17-alpine
@@ -225,12 +182,8 @@ spec:
             - name: PUBLIC_REGISTER_ENABLED
               value: "False"
           resources:
-            # CPU request reduced from 200m to fit in the
-            # heavily-overcommitted cluster while podAffinity pins
-            # this pod to taiga-async's node for the shared RWO
-            # volumes. Limit unchanged — bursts still allowed.
             requests:
-              cpu: 10m
+              cpu: 100m
               memory: 512Mi
             limits:
               cpu: 1000m
@@ -257,7 +210,7 @@ spec:
       volumes:
         - name: media
           persistentVolumeClaim:
-            claimName: taiga-media
+            claimName: taiga-media-rwx
         - name: static
           persistentVolumeClaim:
-            claimName: taiga-static
+            claimName: taiga-static-rwx
