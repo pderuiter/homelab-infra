@@ -48,6 +48,40 @@ spec:
     requests:
       storage: 1Gi
 ---
+# RWX PVCs introduced 2026-05-26 — see commit B for the swap.
+# These start empty; a one-shot migration Job copies data from
+# taiga-media/taiga-static into these before the deployments
+# are switched over.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: taiga-media-rwx
+  namespace: taiga
+  labels:
+    app.kubernetes.io/name: taiga
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: taiga-static-rwx
+  namespace: taiga
+  labels:
+    app.kubernetes.io/name: taiga
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 1Gi
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
