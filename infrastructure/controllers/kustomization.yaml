@@ -20,3 +20,4 @@ resources:
   - web-check
   - synology-csi
   - kubevious
+  - unifi

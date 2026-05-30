@@ -1,0 +1,72 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: unifi-alerts
+  namespace: unifi
+  labels:
+    # Picked up by kube-prometheus-stack Prometheus
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: unifi-updates
+      rules:
+        - alert: UnifiOsUpdateAvailable
+          expr: max by (current_version, latest_version) (unifi_os_update_available) == 1
+          for: 6h
+          labels:
+            severity: warning
+            category: unifi-updates
+          annotations:
+            summary: "UniFi OS update available"
+            description: "UniFi OS {{ $labels.current_version }} can be updated to {{ $labels.latest_version }}."
+
+        - alert: UnifiAppUpdateAvailable
+          expr: max by (app, current_version, channel) (unifi_app_update_available) == 1
+          for: 6h
+          labels:
+            severity: warning
+            category: unifi-updates
+          annotations:
+            summary: "UniFi {{ $labels.app }} app update available"
+            description: "UniFi app '{{ $labels.app }}' on channel {{ $labels.channel }} is at {{ $labels.current_version }} and has an update available."
+
+        - alert: UnifiDeviceUpdateAvailable
+          expr: max by (device, model, mac, current_version, upgrade_to_firmware) (unifi_device_update_available) == 1
+          for: 6h
+          labels:
+            severity: warning
+            category: unifi-updates
+          annotations:
+            summary: "UniFi device {{ $labels.device }} firmware update available"
+            description: "Device {{ $labels.device }} ({{ $labels.model }}, MAC {{ $labels.mac }}) is at firmware {{ $labels.current_version }} and can be upgraded to {{ $labels.upgrade_to_firmware }}."
+
+    - name: unifi-health
+      rules:
+        - alert: UnifiDeviceOffline
+          expr: max by (device, model, mac) (unifi_device_online) == 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "UniFi device {{ $labels.device }} is offline"
+            description: "Device {{ $labels.device }} ({{ $labels.model }}, MAC {{ $labels.mac }}) has been offline for at least 15 minutes."
+
+        - alert: UnifiExporterDown
+          # Exporter hasn't successfully scraped in 30 minutes
+          expr: time() - unifi_scrape_last_success_timestamp_seconds > 1800
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "UniFi update-exporter has not scraped successfully"
+            description: "The unifi-update-exporter has not produced a successful scrape in over 30 minutes. UniFi update alerts will be stale."
+
+        - alert: UnifiScrapeFailing
+          expr: unifi_scrape_success == 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "UniFi update-exporter scrapes are failing"
+            description: "Last scrape attempt failed (likely auth or controller connectivity). Check exporter logs."

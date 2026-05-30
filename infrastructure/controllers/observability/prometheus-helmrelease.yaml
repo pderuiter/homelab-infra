@@ -170,11 +170,28 @@ spec:
             - receiver: 'null'
               matchers:
                 - alertname = "Watchdog"
+            # UniFi update notifications go to a dedicated topic with a long
+            # repeat interval (no point spamming a phone every 4h that v5.1.13
+            # is available — once a day is plenty).
+            - receiver: 'ntfy-unifi'
+              matchers:
+                - category = "unifi-updates"
+              group_wait: 30s
+              group_interval: 10m
+              repeat_interval: 24h
         receivers:
           - name: 'null'
           - name: 'ntfy'
             webhook_configs:
               - url: 'http://ntfy.observability.svc:80/alerts'
+                send_resolved: true
+                http_config:
+                  basic_auth:
+                    username: alertmanager
+                    password_file: /etc/alertmanager/secrets/ntfy-alertmanager/password
+          - name: 'ntfy-unifi'
+            webhook_configs:
+              - url: 'http://ntfy.observability.svc:80/unifi-updates'
                 send_resolved: true
                 http_config:
                   basic_auth:
