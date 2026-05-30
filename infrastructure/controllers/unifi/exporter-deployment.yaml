@@ -17,6 +17,8 @@ spec:
         app.kubernetes.io/name: unifi-update-exporter
     spec:
       automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: nexus-registry-credentials
       securityContext:
         runAsNonRoot: true
         runAsUser: 65534

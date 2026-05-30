@@ -2,15 +2,18 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: unifi-update-exporter
+  name: unifi
   namespace: unifi
   labels:
-    # Required so kube-prometheus-stack's Prometheus instance picks it up
     release: kube-prometheus-stack
 spec:
   selector:
-    matchLabels:
-      app.kubernetes.io/name: unifi-update-exporter
+    matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: In
+        values:
+          - unpoller
+          - unifi-update-exporter
   endpoints:
     - port: metrics
       interval: 60s
