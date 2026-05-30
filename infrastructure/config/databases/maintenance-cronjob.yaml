@@ -1,4 +1,40 @@
 ---
+# ServiceAccount used by maintenance CronJobs to exec into the CNPG primary pod.
+# CNPG has enableSuperuserAccess: false, so password auth as 'postgres' is
+# disabled. Maintenance uses peer auth via kubectl exec inside the pod instead.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: postgres-maintenance
+  namespace: databases
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: postgres-maintenance
+  namespace: databases
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: postgres-maintenance
+  namespace: databases
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: postgres-maintenance
+subjects:
+  - kind: ServiceAccount
+    name: postgres-maintenance
+    namespace: databases
+---
 # VACUUM ANALYZE CronJob - runs daily
 apiVersion: batch/v1
 kind: CronJob
@@ -25,62 +61,56 @@ spec:
             app.kubernetes.io/component: maintenance
         spec:
           restartPolicy: Never
-          serviceAccountName: default
+          serviceAccountName: postgres-maintenance
           containers:
             - name: vacuum-analyze
-              image: ghcr.io/cloudnative-pg/postgresql:16.4
+              image: alpine/k8s:1.31.0
               command:
-                - /bin/bash
+                - /bin/sh
                 - -c
                 - |
-                  set -e
+                  set -euo pipefail
                   echo "Starting VACUUM ANALYZE on all databases..."
 
-                  # Get superuser credentials
-                  export PGPASSWORD=$(cat /secrets/password)
-                  PGUSER=$(cat /secrets/username)
-                  PGHOST="postgres-cluster-rw.databases.svc.cluster.local"
-
-                  # Wait for DNS + postgres to be reachable (handles startup races)
+                  # Find the CNPG primary pod (retry to absorb startup races)
                   for i in $(seq 1 30); do
-                    if pg_isready -h "$PGHOST" -U "$PGUSER" >/dev/null 2>&1; then
-                      echo "Postgres reachable at $PGHOST"
+                    PRIMARY=$(kubectl get pods -n databases \
+                      -l cnpg.io/cluster=postgres-cluster,cnpg.io/instanceRole=primary \
+                      -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
+                    if [ -n "$PRIMARY" ]; then
+                      echo "Primary pod: $PRIMARY"
                       break
                     fi
-                    echo "Waiting for $PGHOST (attempt $i/30)..."
+                    echo "Waiting for CNPG primary (attempt $i/30)..."
                     sleep 5
                     if [ "$i" -eq 30 ]; then
-                      echo "ERROR: postgres unreachable after 150s"; exit 1
+                      echo "ERROR: no primary pod found after 150s"; exit 1
                     fi
                   done
 
-                  # List all databases except templates
-                  DATABASES=$(psql -h $PGHOST -U $PGUSER -d postgres -t -c "SELECT datname FROM pg_database WHERE datistemplate = false AND datname != 'postgres';")
+                  exec_psql() {
+                    kubectl exec -n databases -c postgres "$PRIMARY" -- psql -U postgres "$@"
+                  }
+
+                  DATABASES=$(exec_psql -d postgres -tAc \
+                    "SELECT datname FROM pg_database WHERE datistemplate = false AND datname != 'postgres';")
 
                   for DB in $DATABASES; do
-                    DB=$(echo $DB | xargs)  # Trim whitespace
                     if [ -n "$DB" ]; then
                       echo "Running VACUUM ANALYZE on database: $DB"
-                      psql -h $PGHOST -U $PGUSER -d "$DB" -c "VACUUM (VERBOSE, ANALYZE);" || echo "Warning: VACUUM ANALYZE failed for $DB"
+                      exec_psql -d "$DB" -c "VACUUM (VERBOSE, ANALYZE);" \
+                        || echo "Warning: VACUUM ANALYZE failed for $DB"
                     fi
                   done
 
                   echo "VACUUM ANALYZE completed!"
               resources:
                 requests:
-                  cpu: 100m
-                  memory: 128Mi
+                  cpu: 50m
+                  memory: 64Mi
                 limits:
                   cpu: 500m
                   memory: 256Mi
-              volumeMounts:
-                - name: superuser-credentials
-                  mountPath: /secrets
-                  readOnly: true
-          volumes:
-            - name: superuser-credentials
-              secret:
-                secretName: postgres-superuser-credentials
 ---
 # REINDEX CronJob - runs weekly
 apiVersion: batch/v1
@@ -108,60 +138,55 @@ spec:
             app.kubernetes.io/component: maintenance
         spec:
           restartPolicy: Never
-          serviceAccountName: default
+          serviceAccountName: postgres-maintenance
           containers:
             - name: reindex
-              image: ghcr.io/cloudnative-pg/postgresql:16.4
+              image: alpine/k8s:1.31.0
               command:
-                - /bin/bash
+                - /bin/sh
                 - -c
                 - |
-                  set -e
+                  set -euo pipefail
                   echo "Starting REINDEX on all databases..."
 
-                  export PGPASSWORD=$(cat /secrets/password)
-                  PGUSER=$(cat /secrets/username)
-                  PGHOST="postgres-cluster-rw.databases.svc.cluster.local"
-
-                  # Wait for DNS + postgres to be reachable (handles startup races)
                   for i in $(seq 1 30); do
-                    if pg_isready -h "$PGHOST" -U "$PGUSER" >/dev/null 2>&1; then
-                      echo "Postgres reachable at $PGHOST"
+                    PRIMARY=$(kubectl get pods -n databases \
+                      -l cnpg.io/cluster=postgres-cluster,cnpg.io/instanceRole=primary \
+                      -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
+                    if [ -n "$PRIMARY" ]; then
+                      echo "Primary pod: $PRIMARY"
                       break
                     fi
-                    echo "Waiting for $PGHOST (attempt $i/30)..."
+                    echo "Waiting for CNPG primary (attempt $i/30)..."
                     sleep 5
                     if [ "$i" -eq 30 ]; then
-                      echo "ERROR: postgres unreachable after 150s"; exit 1
+                      echo "ERROR: no primary pod found after 150s"; exit 1
                     fi
                   done
 
-                  DATABASES=$(psql -h $PGHOST -U $PGUSER -d postgres -t -c "SELECT datname FROM pg_database WHERE datistemplate = false AND datname != 'postgres';")
+                  exec_psql() {
+                    kubectl exec -n databases -c postgres "$PRIMARY" -- psql -U postgres "$@"
+                  }
+
+                  DATABASES=$(exec_psql -d postgres -tAc \
+                    "SELECT datname FROM pg_database WHERE datistemplate = false AND datname != 'postgres';")
 
                   for DB in $DATABASES; do
-                    DB=$(echo $DB | xargs)
                     if [ -n "$DB" ]; then
                       echo "Running REINDEX on database: $DB"
-                      psql -h $PGHOST -U $PGUSER -d "$DB" -c "REINDEX DATABASE \"$DB\";" || echo "Warning: REINDEX failed for $DB"
+                      exec_psql -d "$DB" -c "REINDEX DATABASE \"$DB\";" \
+                        || echo "Warning: REINDEX failed for $DB"
                     fi
                   done
 
                   echo "REINDEX completed!"
               resources:
                 requests:
-                  cpu: 100m
-                  memory: 128Mi
+                  cpu: 50m
+                  memory: 64Mi
                 limits:
                   cpu: 500m
                   memory: 256Mi
-              volumeMounts:
-                - name: superuser-credentials
-                  mountPath: /secrets
-                  readOnly: true
-          volumes:
-            - name: superuser-credentials
-              secret:
-                secretName: postgres-superuser-credentials
 ---
 # pg_stat_statements reset - monthly
 apiVersion: batch/v1
@@ -189,49 +214,38 @@ spec:
             app.kubernetes.io/component: maintenance
         spec:
           restartPolicy: Never
-          serviceAccountName: default
+          serviceAccountName: postgres-maintenance
           containers:
             - name: stats-reset
-              image: ghcr.io/cloudnative-pg/postgresql:16.4
+              image: alpine/k8s:1.31.0
               command:
-                - /bin/bash
+                - /bin/sh
                 - -c
                 - |
-                  set -e
+                  set -euo pipefail
                   echo "Resetting pg_stat_statements..."
 
-                  export PGPASSWORD=$(cat /secrets/password)
-                  PGUSER=$(cat /secrets/username)
-                  PGHOST="postgres-cluster-rw.databases.svc.cluster.local"
-
-                  # Wait for DNS + postgres to be reachable (handles startup races)
                   for i in $(seq 1 30); do
-                    if pg_isready -h "$PGHOST" -U "$PGUSER" >/dev/null 2>&1; then
-                      echo "Postgres reachable at $PGHOST"
-                      break
-                    fi
-                    echo "Waiting for $PGHOST (attempt $i/30)..."
+                    PRIMARY=$(kubectl get pods -n databases \
+                      -l cnpg.io/cluster=postgres-cluster,cnpg.io/instanceRole=primary \
+                      -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
+                    if [ -n "$PRIMARY" ]; then break; fi
+                    echo "Waiting for CNPG primary (attempt $i/30)..."
                     sleep 5
                     if [ "$i" -eq 30 ]; then
-                      echo "ERROR: postgres unreachable after 150s"; exit 1
+                      echo "ERROR: no primary pod found after 150s"; exit 1
                     fi
                   done
 
-                  psql -h $PGHOST -U $PGUSER -d postgres -c "SELECT pg_stat_statements_reset();" || echo "Warning: pg_stat_statements_reset failed"
+                  kubectl exec -n databases -c postgres "$PRIMARY" -- \
+                    psql -U postgres -d postgres -c "SELECT pg_stat_statements_reset();" \
+                    || echo "Warning: pg_stat_statements_reset failed"
 
                   echo "Stats reset completed!"
               resources:
                 requests:
-                  cpu: 50m
+                  cpu: 25m
                   memory: 64Mi
                 limits:
                   cpu: 100m
                   memory: 128Mi
-              volumeMounts:
-                - name: superuser-credentials
-                  mountPath: /secrets
-                  readOnly: true
-          volumes:
-            - name: superuser-credentials
-              secret:
-                secretName: postgres-superuser-credentials
