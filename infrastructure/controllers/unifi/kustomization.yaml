@@ -9,5 +9,11 @@ resources:
   - exporter-service.yaml
   - servicemonitor.yaml
   - prometheusrule.yaml
+  # Grafana dashboards (auto-imported by grafana sidecar via label).
+  # 11311 sites, 11312 switches (USW), 11313 gateway (USG),
+  # 11314 access points (UAP), 11315 clients.
   - dashboards/unifi-sites-configmap.yaml
-  - dashboards/unifi-devices-configmap.yaml
+  - dashboards/unifi-switches-configmap.yaml
+  - dashboards/unifi-gateway-configmap.yaml
+  - dashboards/unifi-uap-configmap.yaml
+  - dashboards/unifi-clients-configmap.yaml
