@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: personal-website
+  namespace: personal-website
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
+    external-dns.alpha.kubernetes.io/target: wbyc-srv-vpn01.bsdserver.nl
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - portfolio.bsdserver.nl
+      secretName: personal-website-tls
+  rules:
+    - host: portfolio.bsdserver.nl
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: personal-website
+                port:
+                  number: 80
