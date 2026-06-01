@@ -67,7 +67,7 @@ spec:
             - name: VLLM_BASE_URL
               value: https://vllm.bsdserver.nl/v1
             - name: VLLM_MODEL
-              value: qwen2.5-7b-instruct
+              value: qwen3-8b
             - name: AUTH_URL
               value: https://portfolio.bsdserver.nl
             - name: AUTH_TRUST_HOST
