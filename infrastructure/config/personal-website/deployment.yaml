@@ -35,7 +35,7 @@ spec:
           command:
             - sh
             - -c
-            - until pg_isready -h postgres-cluster-rw.databases.svc.cluster.local -p 5432; do echo "waiting for postgres"; sleep 2; done
+            - until pg_isready -h postgres-cluster-rw.databases.svc.cluster.local -p 5432 -U personal_website -d personal_website; do echo "waiting for postgres"; sleep 2; done
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
