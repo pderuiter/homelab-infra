@@ -5,8 +5,10 @@ metadata:
   namespace: wbyc-website
 data:
   default.conf: |
-    # Resolver needed because proxy_pass uses a variable hostname
-    resolver coredns.kube-system.svc.cluster.local. valid=30s;
+    # Resolver needed because proxy_pass uses a variable hostname.
+    # Using kube-dns ClusterIP directly avoids a chicken-and-egg resolution
+    # of the resolver hostname itself at nginx startup.
+    resolver 10.233.0.3 valid=30s ipv6=off;
 
     server {
         listen 8080;
