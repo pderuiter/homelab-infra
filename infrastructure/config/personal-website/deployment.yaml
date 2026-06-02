@@ -41,7 +41,7 @@ spec:
             capabilities:
               drop: ["ALL"]
         - name: migrate
-          image: nexus.bsdserver.nl:443/docker-registry/personal-website:0.2.0-46823aa4
+          image: nexus.bsdserver.nl:443/docker-registry/personal-website:0.2.0-aa3a8b89
           command: ["node", "migrate.mjs"]
           envFrom:
             - secretRef:
@@ -53,7 +53,7 @@ spec:
               drop: ["ALL"]
       containers:
         - name: web
-          image: nexus.bsdserver.nl:443/docker-registry/personal-website:0.2.0-46823aa4
+          image: nexus.bsdserver.nl:443/docker-registry/personal-website:0.2.0-aa3a8b89
           ports:
             - containerPort: 3000
               name: http
