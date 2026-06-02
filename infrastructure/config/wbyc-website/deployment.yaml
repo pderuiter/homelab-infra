@@ -25,7 +25,7 @@ spec:
         - name: nexus-registry-credentials
       containers:
         - name: nginx
-          image: nexus.bsdserver.nl:443/docker-registry/website-hugo-wbyc:cb04da32
+          image: nexus.bsdserver.nl:443/docker-registry/website-hugo-wbyc:f2cd9a02
           command: ["nginx", "-g", "daemon off;"]
           ports:
             - containerPort: 8080
