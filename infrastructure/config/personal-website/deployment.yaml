@@ -64,10 +64,12 @@ spec:
               value: "3000"
             - name: HOSTNAME
               value: "0.0.0.0"
+            # Ollama's OpenAI-compatible endpoint; the API key from
+            # personal-website-vllm is sent but ignored by Ollama
             - name: VLLM_BASE_URL
-              value: https://vllm.bsdserver.nl/v1
+              value: https://ollama.bsdserver.nl/v1
             - name: VLLM_MODEL
-              value: qwen3-8b
+              value: qwen3:8b
             - name: AUTH_URL
               value: https://portfolio.bsdserver.nl
             - name: AUTH_TRUST_HOST
