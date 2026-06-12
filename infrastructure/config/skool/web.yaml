@@ -25,7 +25,7 @@ spec:
         - name: skool-registry-credentials
       containers:
         - name: web
-          image: nexus.bsdserver.nl/docker-registry/wbyc/docker-skool-web:1.30.0
+          image: nexus.bsdserver.nl/docker-registry/wbyc/docker-skool-web:1.32.2
           imagePullPolicy: Always
           lifecycle:
             preStop:
