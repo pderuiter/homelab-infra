@@ -10,12 +10,16 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-production
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    # external-dns annotations removed 2026-06-13: skool migrated to Docker
-    # Compose on wbyc-srv-docker04. skool.bsdserver.nl now points directly at
-    # the host (A 85.10.201.85) via TransIP. Re-add these two lines to roll
-    # back DNS to the K8s/Pangolin path.
-    # external-dns.alpha.kubernetes.io/external: "true"
-    # external-dns.alpha.kubernetes.io/target: wbyc-srv-vpn01.bsdserver.nl
+    # skool migrated to Docker Compose on wbyc-srv-docker04 (2026-06-13).
+    # The PUBLIC record (skool.bsdserver.nl A 85.10.201.85) is now a manual
+    # TransIP entry — the "external: true" annotation is intentionally gone so
+    # the public external-dns-transip instance (annotation-filter external=true)
+    # releases it. The INTERNAL external-dns (rfc2136 -> 192.168.2.2, no
+    # annotation filter) still manages this ingress, so we override its target
+    # to the docker04 host below so LAN clients also resolve to the new home.
+    # Rollback: remove the target override + re-add external:true (-> Pangolin),
+    # restore replicas, and delete the manual public A/AAAA records.
+    external-dns.alpha.kubernetes.io/target: 85.10.201.85
 spec:
   ingressClassName: traefik
   rules:
