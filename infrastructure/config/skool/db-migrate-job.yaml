@@ -10,6 +10,7 @@ metadata:
     app.kubernetes.io/name: skool
     app.kubernetes.io/component: db-migrate
 spec:
+  suspend: true            # skool stopped post docker04 cutover
   ttlSecondsAfterFinished: 600
   backoffLimit: 3
   template:

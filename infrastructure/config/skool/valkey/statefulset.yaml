@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/component: valkey
 spec:
   serviceName: valkey
-  replicas: 3
+  replicas: 0
   selector:
     matchLabels:
       app.kubernetes.io/name: skool

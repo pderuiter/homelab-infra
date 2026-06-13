@@ -9,6 +9,7 @@ metadata:
     app.kubernetes.io/name: skool
     app.kubernetes.io/component: db-init
 spec:
+  suspend: true            # skool stopped post docker04 cutover
   ttlSecondsAfterFinished: 300
   template:
     spec:
