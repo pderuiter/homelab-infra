@@ -82,7 +82,7 @@ spec:
               memory: 32Mi
       containers:
         - name: ghost
-          image: ghost:6.19.1-alpine
+          image: ghost:6.47.0-alpine
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
@@ -126,9 +126,31 @@ spec:
                 secretKeyRef:
                   name: ghost-database-url
                   key: database__connection__database
-            # Mail configuration (disabled by default)
+            # Mail configuration (SMTP via WBYC relay; creds from Vault via ghost-smtp ES).
+            # Required for Ghost staff 2FA sign-in codes.
             - name: mail__transport
-              value: "Direct"
+              value: "SMTP"
+            - name: mail__from
+              value: "WBYC Blog <noreply@webuildyourcloud.eu>"
+            - name: mail__options__host
+              value: "smtp.webuildyourcloud.eu"
+            - name: mail__options__port
+              value: "2525"
+            - name: mail__options__secure
+              value: "false"
+            # Relay presents a self-signed/internal cert; STARTTLS still encrypts.
+            - name: mail__options__tls__rejectUnauthorized
+              value: "false"
+            - name: mail__options__auth__user
+              valueFrom:
+                secretKeyRef:
+                  name: ghost-smtp
+                  key: username
+            - name: mail__options__auth__pass
+              valueFrom:
+                secretKeyRef:
+                  name: ghost-smtp
+                  key: password
             # Privacy settings
             - name: privacy__useUpdateCheck
               value: "false"
