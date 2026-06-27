@@ -6,7 +6,9 @@ resources:
   - cert-manager
   - external-dns
   - databases
-  - ghost
+  # ghost: decommissioned 2026-06-28 — blog.bsdserver.nl migrated to docker04
+  #   (Ghost behind host Traefik, DNS owned by Terraform). Manifests removed;
+  #   K8s namespace deleted. Data backup on docker04 /home/ansible/blog-migration/.
   - homelab-dashboard
   - listmonk
   - taiga
