@@ -5,4 +5,8 @@ resources:
   - externalsecrets.yaml
   - mysql.yaml
   - ghost.yaml
-  - ingress.yaml
+  # ingress.yaml removed: blog.bsdserver.nl migrated to docker04 (Ghost behind
+  # host Traefik). DNS is now owned by Terraform (terragrunt-live leaves
+  # infra/blog-dns-public + blog-dns-internal). Removing this ingress releases
+  # external-dns ownership (deletes its blog A/CNAME + TXT in both zones).
+  # Ghost/MySQL deployments are kept as warm standby for rollback.
