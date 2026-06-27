@@ -12,9 +12,10 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-production
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
-    # External DNS via TransIP - creates A record pointing to Pangolin VPS
+    # External DNS via TransIP - A record points to docker04 (Ghost migrated
+    # off K8s to docker04 behind host Traefik; was Pangolin wbyc-srv-vpn01).
     external-dns.alpha.kubernetes.io/external: "true"
-    external-dns.alpha.kubernetes.io/target: wbyc-srv-vpn01.bsdserver.nl
+    external-dns.alpha.kubernetes.io/target: 85.10.201.85
 spec:
   ingressClassName: traefik
   tls:
