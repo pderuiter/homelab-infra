@@ -5,4 +5,9 @@ metadata:
   namespace: sealed-secrets
 spec:
   interval: 24h
-  url: https://bitnami-labs.github.io/sealed-secrets
+  # Chart repo moved from bitnami-labs.github.io -> bitnami.github.io. The old
+  # host started returning 404 on index.yaml (~2026-06-25), which left this
+  # HelmRepository stuck 'InProgress' and — because infrastructure-controllers
+  # has wait:true — blocked the entire infrastructure-config layer from
+  # reconciling. New host serves the same charts (2.18.x / appVersion 0.37.0).
+  url: https://bitnami.github.io/sealed-secrets
