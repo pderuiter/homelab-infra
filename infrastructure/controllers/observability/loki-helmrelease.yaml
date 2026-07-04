@@ -78,7 +78,7 @@ spec:
       persistence:
         enabled: true
         storageClass: longhorn
-        size: 40Gi
+        size: 100Gi
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
