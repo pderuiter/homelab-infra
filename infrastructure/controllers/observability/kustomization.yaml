@@ -7,6 +7,7 @@ resources:
   - prometheus-helmrelease.yaml
   - loki-helmrelease.yaml
   - alloy-helmrelease.yaml
+  - alloy-syslog-service.yaml
   - grafana-helmrelease.yaml
   - keycloak-dashboard-configmap.yaml
   - minio-dashboard-configmap.yaml

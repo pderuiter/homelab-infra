@@ -70,6 +70,18 @@ spec:
             forward_to = [loki.write.default.receiver]
           }
 
+          // Fleet syslog ingest (rsyslog RFC5424 from CFEngine-managed hosts over the mesh)
+          loki.source.syslog "fleet" {
+            listener {
+              address       = "0.0.0.0:1514"
+              protocol      = "tcp"
+              syslog_format = "rfc5424"
+              label_structured_data = true
+              labels        = { job = "fleet-syslog", source = "rsyslog" }
+            }
+            forward_to = [loki.write.default.receiver]
+          }
+
           // Send logs to Loki
           loki.write "default" {
             endpoint {
@@ -91,6 +103,13 @@ spec:
         limits:
           cpu: 200m
           memory: 256Mi
+
+      # Expose the fleet syslog listener (loki.source.syslog "fleet") on the container
+      extraPorts:
+        - name: syslog-tcp
+          port: 1514
+          targetPort: 1514
+          protocol: TCP
 
     controller:
       type: daemonset
