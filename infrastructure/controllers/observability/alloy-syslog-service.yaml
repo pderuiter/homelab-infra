@@ -4,7 +4,7 @@ metadata:
   name: alloy-syslog
   namespace: observability
   annotations:
-    metallb.universe.tf/loadBalancerIPs: 192.168.2.23
+    metallb.universe.tf/loadBalancerIPs: 192.168.2.161
 spec:
   type: LoadBalancer
   selector:
