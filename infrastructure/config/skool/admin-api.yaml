@@ -8,7 +8,7 @@ metadata:
     app.kubernetes.io/name: skool
     app.kubernetes.io/component: admin-api
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       app.kubernetes.io/name: skool
@@ -23,7 +23,7 @@ spec:
         - name: skool-registry-credentials
       containers:
         - name: admin-api
-          image: nexus.bsdserver.nl/docker-registry/wbyc/docker-skool-admin_api:1.30.0
+          image: nexus.bsdserver.nl/docker-registry/wbyc/docker-skool-admin_api:1.32.2
           imagePullPolicy: Always
           ports:
             - containerPort: 4001

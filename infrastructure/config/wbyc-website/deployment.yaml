@@ -25,7 +25,7 @@ spec:
         - name: nexus-registry-credentials
       containers:
         - name: nginx
-          image: nexus.bsdserver.nl:443/docker-registry/website-hugo-wbyc:cb04da32
+          image: nexus.bsdserver.nl:443/docker-registry/website-hugo-wbyc:1.10.0
           command: ["nginx", "-g", "daemon off;"]
           ports:
             - containerPort: 8080
@@ -43,12 +43,14 @@ spec:
               port: 8080
             initialDelaySeconds: 5
             periodSeconds: 10
+            timeoutSeconds: 3
           readinessProbe:
             httpGet:
               path: /
               port: 8080
             initialDelaySeconds: 3
             periodSeconds: 5
+            timeoutSeconds: 3
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false

@@ -10,6 +10,7 @@ metadata:
     app.kubernetes.io/name: skool
     app.kubernetes.io/component: db-migrate
 spec:
+  suspend: true            # skool stopped post docker04 cutover
   ttlSecondsAfterFinished: 600
   backoffLimit: 3
   template:
@@ -18,7 +19,7 @@ spec:
       initContainers:
         # Pull the latest API image to get the migration files
         - name: copy-migrations
-          image: nexus.bsdserver.nl/docker-registry/wbyc/docker-skool-api:1.30.0
+          image: nexus.bsdserver.nl/docker-registry/wbyc/docker-skool-api:1.32.2
           imagePullPolicy: Always
           command: ["sh", "-c"]
           args:

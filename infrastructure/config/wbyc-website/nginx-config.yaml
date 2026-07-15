@@ -5,18 +5,60 @@ metadata:
   namespace: wbyc-website
 data:
   default.conf: |
+    # Resolver needed because proxy_pass uses a variable hostname.
+    # Using kube-dns ClusterIP directly avoids a chicken-and-egg resolution
+    # of the resolver hostname itself at nginx startup.
+    resolver 10.233.0.3 valid=30s ipv6=off;
+
     server {
         listen 8080;
         server_name _;
         root /usr/share/nginx/html;
         index index.html;
 
-        location / {
-            try_files $uri $uri/ /index.html;
+        # Security headers
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+        # Gzip
+        gzip on;
+        gzip_vary on;
+        gzip_min_length 1024;
+        gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/rss+xml text/javascript image/svg+xml;
+
+        # Proxy external blog feed to avoid CORS in the browser
+        location = /api/blog-feed {
+            set $blog_upstream "https://blog.bsdserver.nl/rss/";
+            proxy_pass $blog_upstream;
+            proxy_set_header Host blog.bsdserver.nl;
+            proxy_ssl_server_name on;
+            proxy_hide_header Set-Cookie;
+            proxy_cache_valid 200 5m;
+            add_header Cache-Control "public, max-age=300" always;
+            add_header Content-Type "application/rss+xml; charset=utf-8" always;
         }
 
+        # Custom error pages for 4xx/5xx
+        error_page 403 /errors/403/index.html;
+        error_page 429 /errors/429/index.html;
+        error_page 500 /errors/500/index.html;
+        error_page 502 /errors/502/index.html;
+        error_page 503 /errors/503/index.html;
+
+        location / {
+            try_files $uri $uri/ $uri/index.html =404;
+        }
+
+        # Long cache for static assets
         location ~* \.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2)$ {
             expires 1y;
             add_header Cache-Control "public, immutable";
+        }
+
+        # Hugo's 404 page
+        error_page 404 /404.html;
+        location = /404.html {
+            internal;
         }
     }
