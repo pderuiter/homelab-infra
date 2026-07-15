@@ -16,6 +16,30 @@ spec:
     spec:
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
+      # netbird must start AFTER calico-node: if netbird attaches its XDP
+      # program to lo before Felix's first sync, Felix enters an infinite
+      # detach loop (~1 vCPU) and degrades pod networking (incidents
+      # 2026-05-18 and 2026-07-15). Felix health endpoint: localhost:9099.
+      initContainers:
+        - name: wait-for-calico
+          image: curlimages/curl:8.14.1
+          command:
+            - sh
+            - -c
+            - |
+              until curl -fsS --max-time 2 http://localhost:9099/readiness; do
+                echo "calico-node not ready yet, retrying in 5s"
+                sleep 5
+              done
+              sleep 10
+              echo "calico-node ready, starting netbird"
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 50m
+              memory: 32Mi
       containers:
         - name: netbird
           image: netbirdio/netbird:0.66.3
